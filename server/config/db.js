@@ -4,7 +4,13 @@ const useSqlite = !process.env.DB_HOST || process.env.USE_SQLITE === 'true';
 let pool;
 
 if (useSqlite) {
-  const sqlite = require('./db-sqlite');
+  let sqlite;
+  try {
+    sqlite = require('./db-sqlite');
+  } catch (e) {
+    console.error('SQLite not available, falling back. Set DB_HOST for MySQL.');
+    process.exit(1);
+  }
   pool = {
     query: sqlite.query,
     getConnection: sqlite.getConnection,
@@ -14,10 +20,10 @@ if (useSqlite) {
 
   function createPool() {
     const config = {
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'bg_mesob_attendance',
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
       waitForConnections: true,
       connectionLimit: process.env.VERCEL ? 2 : 10,
       dateStrings: true,
