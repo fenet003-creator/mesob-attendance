@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Logs — BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Audit Logs</h1>
+          <p class="page-subtitle">System activity and security events</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-ghost btn-sm" onclick="refreshLogs()" aria-label="Refresh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="exportCsv()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <div id="pageAlert"></div>
+
+      <div class="card" style="margin-bottom: var(--space-6);">
+        <div class="card-body">
+          <div class="filter-bar">
+            <select id="actionFilter">
+              <option value="">All Actions</option>
+              <option value="login">Login</option>
+              <option value="create">Create</option>
+              <option value="update">Update</option>
+              <option value="delete">Delete</option>
+              <option value="approve">Approve</option>
+              <option value="reject">Reject</option>
+            </select>
+            <select id="entityFilter">
+              <option value="">All Entities</option>
+              <option value="intern">Intern</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="application">Application</option>
+              <option value="placement">Placement</option>
+              <option value="announcement">Announcement</option>
+            </select>
+            <input type="text" id="userFilter" placeholder="Filter by user ID..." style="max-width: 160px;">
+            <input type="date" id="startDate" style="max-width: 180px;">
+            <input type="date" id="endDate" style="max-width: 180px;">
+            <button class="btn btn-primary" onclick="loadLogs()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Filter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>System Activity</h2>
+          <span class="text-sm text-muted" id="logCount"></span>
+        </div>
+        <div class="card-body-compact">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Username</th>
+                  <th>Action</th>
+                  <th>Entity</th>
+                  <th>Entity ID</th>
+                  <th>Details</th>
+                  <th>IP Address</th>
+                </tr>
+              </thead>
+              <tbody id="logsBody">
+                <tr><td colspan="7" class="empty-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    requireAuth('admin');
+    document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'audit-logs');
+
+    let cachedLogs = [];
+
+    async function loadLogs() {
+      const action = document.getElementById('actionFilter').value;
+      const entityType = document.getElementById('entityFilter').value;
+      const userId = document.getElementById('userFilter').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+
+      const params = new URLSearchParams();
+      if (action) params.set('action', action);
+      if (entityType) params.set('entity_type', entityType);
+      if (userId) params.set('user_id', userId);
+      if (startDate) params.set('start_date', startDate);
+      if (endDate) params.set('end_date', endDate);
+      params.set('limit', '200');
+
+      try {
+        const logs = await apiRequest('/audit-logs?' + params);
+        cachedLogs = logs;
+        document.getElementById('logCount').textContent = logs.length + ' record' + (logs.length !== 1 ? 's' : '');
+
+        const tbody = document.getElementById('logsBody');
+        if (logs.length === 0) {
+          tbody.innerHTML = renderEmptyState('No audit logs found');
+          return;
+        }
+        tbody.innerHTML = logs.map(log => `
+          <tr>
+            <td class="font-mono text-sm">${formatDateTime(log.created_at)}</td>
+            <td class="font-bold">${escapeHtml(log.username || log.user_id)}</td>
+            <td>${actionBadge(log.action)}</td>
+            <td>${escapeHtml(log.entity_type) || '—'}</td>
+            <td class="font-mono text-sm">${escapeHtml(String(log.entity_id || '—'))}</td>
+            <td class="text-sm log-details">${escapeHtml(formatDetails(log.details))}</td>
+            <td class="font-mono text-sm">${escapeHtml(log.ip_address) || '—'}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    function refreshLogs() {
+      loadLogs();
+    }
+
+    function formatDetails(details) {
+      if (!details) return '';
+      if (typeof details === 'string') return details;
+      try {
+        const keys = Object.keys(details);
+        if (keys.length === 0) return '';
+        return keys.slice(0, 3).map(k => k + ': ' + String(details[k]).slice(0, 30)).join(', ');
+      } catch {
+        return String(details);
+      }
+    }
+
+    function formatDateTime(iso) {
+      if (!iso) return '—';
+      try {
+        const d = new Date(iso);
+        const pad = n => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+               pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+      } catch {
+        return iso;
+      }
+    }
+
+    function actionBadge(action) {
+      if (!action) return '';
+      const colors = {
+        login: 'success',
+        create: 'active',
+        update: 'warning',
+        delete: 'danger',
+        approve: 'active',
+        reject: 'inactive'
+      };
+      const cls = colors[action] || '';
+      return '<span class="badge badge-' + cls + '">' + escapeHtml(action) + '</span>';
+    }
+
+    function exportCsv() {
+      if (cachedLogs.length === 0) {
+        showAlert(document.getElementById('pageAlert'), 'No logs to export');
+        return;
+      }
+
+      const headers = ['Timestamp', 'Username', 'Action', 'Entity Type', 'Entity ID', 'Details', 'IP Address'];
+      const rows = cachedLogs.map(log => [
+        formatDateTime(log.created_at),
+        log.username || log.user_id || '',
+        log.action || '',
+        log.entity_type || '',
+        log.entity_id || '',
+        formatDetails(log.details).replace(/"/g, '""'),
+        log.ip_address || ''
+      ]);
+
+      const csv = [headers, ...rows]
+        .map(row => row.map(cell => '"' + String(cell) + '"').join(','))
+        .join('\n');
+
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'audit-logs-' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('userFilter').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') loadLogs();
+    });
+
+    loadLogs();
+  </script>
+</body>
+</html>

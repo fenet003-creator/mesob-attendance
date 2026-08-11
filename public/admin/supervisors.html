@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Supervisors — BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Supervisors</h1>
+          <p class="page-subtitle">Add, edit, and manage supervisor accounts</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-primary" onclick="openSupervisorModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Supervisor
+          </button>
+        </div>
+      </div>
+
+      <div id="pageAlert"></div>
+
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by name, email, department...">
+        <select id="statusFilter">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <button class="btn btn-outline" onclick="loadSupervisors()">Search</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>All Supervisors</h2>
+          <div class="card-header-actions">
+            <span class="text-sm text-muted" id="supervisorCount"></span>
+          </div>
+        </div>
+        <div class="card-body-compact">
+          <div class="table-wrapper">
+            <table id="supervisorsTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Department</th>
+                  <th>Specialization</th>
+                  <th>Status</th>
+                  <th>Assigned Interns</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="supervisorsBody">
+                <tr><td colspan="8" class="empty-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add/Edit Supervisor Modal -->
+  <div class="modal-overlay" id="supervisorModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="supervisorModalTitle">Add Supervisor</h3>
+        <button class="modal-close" onclick="closeModal('supervisorModal')">&times;</button>
+      </div>
+      <form id="supervisorForm">
+        <div class="modal-body">
+          <div id="supervisorFormAlert"></div>
+          <input type="hidden" id="supervisorId">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name <span class="required">*</span></label>
+              <input type="text" id="sup_full_name" required maxlength="150" placeholder="e.g. Dr. Kebede Wondafrash">
+            </div>
+            <div class="form-group">
+              <label>Email <span class="required">*</span></label>
+              <input type="email" id="sup_email" required maxlength="150" placeholder="e.g. kebede@mesob.com">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="sup_phone" maxlength="20" placeholder="e.g. +251911234567">
+            </div>
+            <div class="form-group">
+              <label>Department</label>
+              <input type="text" id="sup_department" maxlength="150" placeholder="e.g. Engineering">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Specialization</label>
+              <input type="text" id="sup_specialization" maxlength="150" placeholder="e.g. Software Development">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="sup_status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row" id="credentialsSection">
+            <div class="form-group">
+              <label>Username <span class="required">*</span></label>
+              <input type="text" id="sup_username" maxlength="100" placeholder="Login username">
+            </div>
+            <div class="form-group">
+              <label>Password <span class="required">*</span></label>
+              <input type="password" id="sup_password" minlength="6" placeholder="Min 6 characters">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('supervisorModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="supSaveBtn">Save Supervisor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Assigned Interns Modal -->
+  <div class="modal-overlay" id="viewInternsModal">
+    <div class="modal" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 id="viewInternsTitle">Assigned Interns</h3>
+        <button class="modal-close" onclick="closeModal('viewInternsModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:0;">
+        <div id="viewInternsAlert"></div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="viewInternsBody">
+              <tr><td colspan="5" class="empty-state"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="openAssignBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Assign Interns
+        </button>
+        <button class="btn btn-outline" onclick="closeModal('viewInternsModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign Interns Modal -->
+  <div class="modal-overlay" id="assignInternsModal">
+    <div class="modal" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3>Assign Interns</h3>
+        <button class="modal-close" onclick="closeModal('assignInternsModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="assignAlert"></div>
+        <div id="assignInternsList" style="max-height:360px;overflow-y:auto;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('assignInternsModal')">Cancel</button>
+        <button class="btn btn-primary" id="confirmAssignBtn">Assign Selected</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    requireAuth('admin');
+    document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'supervisors');
+    let editingId = null;
+    let currentSupervisorId = null;
+
+    // --- Load supervisors ---
+    async function loadSupervisors() {
+      const search = document.getElementById('searchInput').value;
+      const status = document.getElementById('statusFilter').value;
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+
+      try {
+        const supervisors = await apiRequest('/supervisors?' + params);
+        const tbody = document.getElementById('supervisorsBody');
+        document.getElementById('supervisorCount').textContent = supervisors.length + ' supervisor' + (supervisors.length !== 1 ? 's' : '');
+
+        if (supervisors.length === 0) {
+          tbody.innerHTML = renderEmptyState('No supervisors found');
+          return;
+        }
+        tbody.innerHTML = supervisors.map(s => `
+          <tr>
+            <td class="font-bold">${escapeHtml(s.full_name)}</td>
+            <td>${escapeHtml(s.email)}</td>
+            <td>${escapeHtml(s.phone) || '\u2014'}</td>
+            <td>${escapeHtml(s.department) || '\u2014'}</td>
+            <td>${escapeHtml(s.specialization) || '\u2014'}</td>
+            <td><span class="badge badge-${s.status === 'active' ? 'active' : 'inactive'}">${escapeHtml(s.status)}</span></td>
+            <td><span class="badge badge-info">${s.intern_count || 0}</span></td>
+            <td>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-ghost" data-edit="${s.id}" aria-label="Edit">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn btn-sm btn-ghost" data-view-interns="${s.id}" data-name="${escapeHtml(s.full_name)}" aria-label="View Interns" style="color:var(--color-info);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </button>
+                <button class="btn btn-sm btn-ghost" data-delete="${s.id}" data-name="${escapeHtml(s.full_name)}" aria-label="Delete" style="color:var(--color-danger);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    // --- Table action delegation ---
+    document.getElementById('supervisorsBody').addEventListener('click', (e) => {
+      const editBtn = e.target.closest('[data-edit]');
+      if (editBtn) return editSupervisor(editBtn.dataset.edit);
+      const viewBtn = e.target.closest('[data-view-interns]');
+      if (viewBtn) return viewInterns(viewBtn.dataset.viewInterns, viewBtn.dataset.name);
+      const deleteBtn = e.target.closest('[data-delete]');
+      if (deleteBtn) return deleteSupervisor(deleteBtn.dataset.delete, deleteBtn.dataset.name);
+    });
+
+    // --- Open Add Supervisor Modal ---
+    function openSupervisorModal() {
+      editingId = null;
+      document.getElementById('supervisorModalTitle').textContent = 'Add Supervisor';
+      document.getElementById('supervisorForm').reset();
+      document.getElementById('supervisorId').value = '';
+      document.getElementById('credentialsSection').style.display = '';
+      document.getElementById('sup_username').required = true;
+      document.getElementById('sup_password').required = true;
+      document.getElementById('supSaveBtn').textContent = 'Save Supervisor';
+      openModal('supervisorModal');
+    }
+
+    // --- Edit Supervisor ---
+    async function editSupervisor(id) {
+      try {
+        const sup = await apiRequest('/supervisors/' + id);
+        editingId = id;
+        document.getElementById('supervisorModalTitle').textContent = 'Edit Supervisor';
+        document.getElementById('supervisorId').value = id;
+        document.getElementById('sup_full_name').value = sup.full_name;
+        document.getElementById('sup_email').value = sup.email;
+        document.getElementById('sup_phone').value = sup.phone || '';
+        document.getElementById('sup_department').value = sup.department || '';
+        document.getElementById('sup_specialization').value = sup.specialization || '';
+        document.getElementById('sup_status').value = sup.status;
+        document.getElementById('credentialsSection').style.display = 'none';
+        document.getElementById('sup_username').required = false;
+        document.getElementById('sup_password').required = false;
+        document.getElementById('supSaveBtn').textContent = 'Update Supervisor';
+        openModal('supervisorModal');
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    // --- Form submit ---
+    document.getElementById('supervisorForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById('supervisorFormAlert');
+      const payload = {
+        full_name: document.getElementById('sup_full_name').value,
+        email: document.getElementById('sup_email').value,
+        phone: document.getElementById('sup_phone').value,
+        department: document.getElementById('sup_department').value,
+        specialization: document.getElementById('sup_specialization').value,
+      };
+
+      try {
+        if (editingId) {
+          payload.status = document.getElementById('sup_status').value;
+          await apiRequest('/supervisors/' + editingId, { method: 'PUT', body: JSON.stringify(payload) });
+        } else {
+          payload.username = document.getElementById('sup_username').value;
+          payload.password = document.getElementById('sup_password').value;
+          await apiRequest('/supervisors', { method: 'POST', body: JSON.stringify(payload) });
+        }
+        closeModal('supervisorModal');
+        loadSupervisors();
+      } catch (err) {
+        showAlert(alertEl, err.message);
+      }
+    });
+
+    // --- Delete Supervisor ---
+    async function deleteSupervisor(id, name) {
+      confirmDialog(
+        'Delete Supervisor',
+        'Delete "' + name + '"? This will also remove all their intern assignments.',
+        async () => {
+          try {
+            await apiRequest('/supervisors/' + id, { method: 'DELETE' });
+            loadSupervisors();
+          } catch (err) {
+            showAlert(document.getElementById('pageAlert'), err.message);
+          }
+        },
+        'Delete',
+        true
+      );
+    }
+
+    // --- View Assigned Interns ---
+    async function viewInterns(supId, supName) {
+      currentSupervisorId = supId;
+      document.getElementById('viewInternsTitle').textContent = 'Interns assigned to ' + supName;
+      const tbody = document.getElementById('viewInternsBody');
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="spinner"></div></td></tr>';
+      openModal('viewInternsModal');
+      document.getElementById('openAssignBtn').onclick = () => {
+        closeModal('viewInternsModal');
+        openAssignModal(supId);
+      };
+
+      try {
+        const interns = await apiRequest('/supervisors/' + supId + '/interns');
+        if (interns.length === 0) {
+          tbody.innerHTML = renderEmptyState('No interns assigned');
+          return;
+        }
+        tbody.innerHTML = interns.map(i => `
+          <tr>
+            <td class="font-bold">${escapeHtml(i.full_name)}</td>
+            <td>${escapeHtml(i.email)}</td>
+            <td>${escapeHtml(i.department) || '\u2014'}</td>
+            <td><span class="badge badge-${i.status === 'active' ? 'active' : i.status === 'completed' ? 'completed' : 'inactive'}">${escapeHtml(i.status)}</span></td>
+            <td>
+              <button class="btn btn-sm btn-ghost" onclick="unassignIntern(${supId}, ${i.id}, '${escapeHtml(i.full_name).replace(/'/g, "\\'")}')" style="color:var(--color-danger);" aria-label="Unassign">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Unassign
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted text-sm" style="padding:2rem;">Failed to load interns.</td></tr>';
+      }
+    }
+
+    // --- Unassign Intern ---
+    async function unassignIntern(supId, internId, internName) {
+      confirmDialog(
+        'Unassign Intern',
+        'Remove "' + internName + '" from this supervisor?',
+        async () => {
+          try {
+            await apiRequest('/supervisors/' + supId + '/unassign', {
+              method: 'POST',
+              body: JSON.stringify({ intern_id: internId }),
+            });
+            loadSupervisors();
+            viewInterns(supId, document.getElementById('viewInternsTitle').textContent.replace('Interns assigned to ', ''));
+          } catch (err) {
+            showAlert(document.getElementById('viewInternsAlert'), err.message);
+          }
+        },
+        'Unassign',
+        true
+      );
+    }
+
+    // --- Assign Interns Modal ---
+    async function openAssignModal(supId) {
+      currentSupervisorId = supId;
+      const container = document.getElementById('assignInternsList');
+      container.innerHTML = '<div class="empty-state"><div class="spinner"></div></div>';
+      document.getElementById('assignAlert').innerHTML = '';
+      openModal('assignInternsModal');
+
+      try {
+        // Get all interns
+        const allInterns = await apiRequest('/interns');
+        // Get currently assigned interns
+        const assigned = await apiRequest('/supervisors/' + supId + '/interns');
+        const assignedIds = new Set(assigned.map(i => i.id));
+        const unassigned = allInterns.filter(i => !assignedIds.has(i.id));
+
+        if (unassigned.length === 0) {
+          container.innerHTML = '<div class="empty-state" style="padding:2rem 1rem;"><p class="text-muted text-sm">All interns are already assigned.</p></div>';
+          document.getElementById('confirmAssignBtn').disabled = true;
+          return;
+        }
+
+        document.getElementById('confirmAssignBtn').disabled = false;
+        container.innerHTML = unassigned.map(i => `
+          <label style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem 1rem;border:1px solid var(--color-border-light);border-radius:var(--radius-lg);margin-bottom:var(--space-2);cursor:pointer;transition:background 0.15s;">
+            <input type="checkbox" value="${i.id}" style="width:16px;height:16px;accent-color:var(--color-gold);">
+            <div>
+              <div class="font-bold text-sm">${escapeHtml(i.full_name)}</div>
+              <div class="text-xs text-muted">${escapeHtml(i.email)}${i.department ? ' &middot; ' + escapeHtml(i.department) : ''}</div>
+            </div>
+          </label>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<div class="text-center text-muted text-sm" style="padding:2rem;">Failed to load interns.</div>';
+      }
+    }
+
+    // --- Confirm Assign ---
+    document.getElementById('confirmAssignBtn').addEventListener('click', async () => {
+      const checkboxes = document.querySelectorAll('#assignInternsList input[type="checkbox"]:checked');
+      const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+      if (ids.length === 0) {
+        showAlert(document.getElementById('assignAlert'), 'Please select at least one intern.', 'warning');
+        return;
+      }
+
+      try {
+        await apiRequest('/supervisors/' + currentSupervisorId + '/assign', {
+          method: 'POST',
+          body: JSON.stringify({ intern_ids: ids }),
+        });
+        closeModal('assignInternsModal');
+        loadSupervisors();
+        viewInterns(currentSupervisorId, document.getElementById('viewInternsTitle').textContent.replace('Interns assigned to ', ''));
+      } catch (err) {
+        showAlert(document.getElementById('assignAlert'), err.message);
+      }
+    });
+
+    // --- Search on Enter ---
+    document.getElementById('searchInput').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') loadSupervisors();
+    });
+
+    loadSupervisors();
+  </script>
+</body>
+</html>

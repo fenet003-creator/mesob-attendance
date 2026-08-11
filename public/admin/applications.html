@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Applications — BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Applications</h1>
+          <p class="page-subtitle">Review and manage internship applications</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-primary" onclick="openAddModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Application
+          </button>
+        </div>
+      </div>
+
+      <div id="pageAlert"></div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-accent warning"></div>
+          <div class="stat-card-label">Pending</div>
+          <div class="stat-card-value text-warning" id="statPending"><div class="spinner"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent success"></div>
+          <div class="stat-card-label">Approved</div>
+          <div class="stat-card-value text-success" id="statApproved"><div class="spinner"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent danger"></div>
+          <div class="stat-card-label">Rejected</div>
+          <div class="stat-card-value text-danger" id="statRejected"><div class="spinner"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent gold"></div>
+          <div class="stat-card-label">Total</div>
+          <div class="stat-card-value text-gold" id="statTotal"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by name, email, university\u2026">
+        <select id="statusFilter">
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="correction_requested">Correction Requested</option>
+        </select>
+        <input type="text" id="universityFilter" placeholder="Filter by university\u2026">
+        <button class="btn btn-outline" onclick="loadApplications()">Search</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>All Applications</h2>
+          <div class="card-header-actions">
+            <span class="text-sm text-muted" id="appCount"></span>
+          </div>
+        </div>
+        <div class="card-body-compact">
+          <div class="table-wrapper">
+            <table id="applicationsTable">
+              <thead>
+                <tr>
+                  <th>Applicant</th>
+                  <th>Email</th>
+                  <th>University</th>
+                  <th>Department</th>
+                  <th>Applied</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="applicationsBody">
+                <tr><td colspan="7" class="empty-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="viewModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Application Details</h3>
+        <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="viewModalBody">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('viewModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Application</h3>
+        <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+      </div>
+      <form id="addForm">
+        <div class="modal-body">
+          <div id="addFormAlert"></div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name <span class="required">*</span></label>
+              <input type="text" id="add_full_name" required maxlength="150" placeholder="e.g. Abebe Kebede">
+            </div>
+            <div class="form-group">
+              <label>Email <span class="required">*</span></label>
+              <input type="email" id="add_email" required maxlength="150" placeholder="e.g. abebe@university.edu">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="add_phone" maxlength="20" placeholder="e.g. +251911234567">
+            </div>
+            <div class="form-group">
+              <label>University <span class="required">*</span></label>
+              <input type="text" id="add_university" required maxlength="150" placeholder="e.g. Addis Ababa University">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Department <span class="required">*</span></label>
+              <input type="text" id="add_department" required maxlength="150" placeholder="e.g. Computer Science">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="add_status">
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="correction_requested">Correction Requested</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Cover Letter</label>
+            <textarea id="add_cover_letter" rows="4" placeholder="Applicant cover letter\u2026"></textarea>
+          </div>
+          <div class="form-group">
+            <label>CV / Resume URL</label>
+            <input type="url" id="add_cv_url" placeholder="https://drive.google.com/...">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('addModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="rejectModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Reject Application</h3>
+        <button class="modal-close" onclick="closeModal('rejectModal')">&times;</button>
+      </div>
+      <form id="rejectForm">
+        <div class="modal-body">
+          <div id="rejectFormAlert"></div>
+          <p class="text-sm text-muted mb-4" id="rejectTarget"></p>
+          <div class="form-group">
+            <label>Rejection Reason <span class="required">*</span></label>
+            <textarea id="rejectReason" rows="4" required placeholder="Explain why this application is being rejected\u2026"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('rejectModal')">Cancel</button>
+          <button type="submit" class="btn btn-danger">Reject Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="correctionModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Request Correction</h3>
+        <button class="modal-close" onclick="closeModal('correctionModal')">&times;</button>
+      </div>
+      <form id="correctionForm">
+        <div class="modal-body">
+          <div id="correctionFormAlert"></div>
+          <p class="text-sm text-muted mb-4" id="correctionTarget"></p>
+          <div class="form-group">
+            <label>Notes <span class="required">*</span></label>
+            <textarea id="correctionNotes" rows="4" required placeholder="Explain what needs to be corrected or updated\u2026"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('correctionModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Send Correction Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    requireAuth('admin');
+    document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'applications');
+
+    let allApplications = [];
+
+    async function loadApplications() {
+      const search = document.getElementById('searchInput').value;
+      const status = document.getElementById('statusFilter').value;
+      const university = document.getElementById('universityFilter').value;
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (status && status !== 'all') params.set('status', status);
+      if (university) params.set('university', university);
+
+      try {
+        const apps = await apiRequest('/applications?' + params);
+        allApplications = apps;
+        updateStats(apps);
+        renderTable(apps);
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    function updateStats(apps) {
+      const pending = apps.filter(a => a.status === 'pending').length;
+      const approved = apps.filter(a => a.status === 'approved').length;
+      const rejected = apps.filter(a => a.status === 'rejected').length;
+      document.getElementById('statPending').textContent = pending;
+      document.getElementById('statApproved').textContent = approved;
+      document.getElementById('statRejected').textContent = rejected;
+      document.getElementById('statTotal').textContent = apps.length;
+    }
+
+    function renderTable(apps) {
+      const tbody = document.getElementById('applicationsBody');
+      document.getElementById('appCount').textContent = apps.length + ' application' + (apps.length !== 1 ? 's' : '');
+
+      if (apps.length === 0) {
+        tbody.innerHTML = renderEmptyState('No applications found', Icons.fileText);
+        return;
+      }
+
+      tbody.innerHTML = apps.map(a => `
+        <tr>
+          <td class="font-bold">${escapeHtml(a.full_name)}</td>
+          <td>${escapeHtml(a.email)}</td>
+          <td>${escapeHtml(a.university) || '\u2014'}</td>
+          <td>${escapeHtml(a.department) || '\u2014'}</td>
+          <td class="font-mono text-sm">${formatDate(a.created_at || a.applied_date)}</td>
+          <td>${applicationBadge(a.status)}</td>
+          <td>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-ghost" data-view="${a.id}" aria-label="View">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              ${a.status !== 'approved' ? `<button class="btn btn-sm btn-ghost" data-approve="${a.id}" data-name="${escapeHtml(a.full_name)}" aria-label="Approve" style="color:var(--color-success);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>` : ''}
+              ${a.status !== 'rejected' ? `<button class="btn btn-sm btn-ghost" data-reject="${a.id}" data-name="${escapeHtml(a.full_name)}" aria-label="Reject" style="color:var(--color-danger);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>` : ''}
+              ${a.status !== 'correction_requested' ? `<button class="btn btn-sm btn-ghost" data-correct="${a.id}" data-name="${escapeHtml(a.full_name)}" aria-label="Request Correction" style="color:var(--color-info);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>` : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function applicationBadge(status) {
+      const map = {
+        pending: 'warning',
+        approved: 'success',
+        rejected: 'danger',
+        correction_requested: 'info',
+      };
+      const variant = map[status] || 'warning';
+      return `<span class="badge badge-${variant}">${escapeHtml(status.replace('_', ' '))}</span>`;
+    }
+
+    document.getElementById('applicationsBody').addEventListener('click', (e) => {
+      const viewBtn = e.target.closest('[data-view]');
+      if (viewBtn) return viewApplication(viewBtn.dataset.view);
+
+      const approveBtn = e.target.closest('[data-approve]');
+      if (approveBtn) return approveApplication(approveBtn.dataset.approve, approveBtn.dataset.name);
+
+      const rejectBtn = e.target.closest('[data-reject]');
+      if (rejectBtn) return openRejectModal(rejectBtn.dataset.reject, rejectBtn.dataset.name);
+
+      const correctBtn = e.target.closest('[data-correct]');
+      if (correctBtn) return openCorrectionModal(correctBtn.dataset.correct, correctBtn.dataset.name);
+    });
+
+    async function viewApplication(id) {
+      try {
+        const app = await apiRequest('/applications/' + id);
+        const body = document.getElementById('viewModalBody');
+        body.innerHTML = `
+          <div class="mb-6">
+            <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">Applicant</div>
+            <div class="font-bold text-lg">${escapeHtml(app.full_name)}</div>
+            <div class="text-sm text-muted">${escapeHtml(app.email)}</div>
+            ${app.phone ? `<div class="text-sm text-muted">${escapeHtml(app.phone)}</div>` : ''}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);" class="mb-6">
+            <div>
+              <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">University</div>
+              <div class="text-sm">${escapeHtml(app.university) || '\u2014'}</div>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">Department</div>
+              <div class="text-sm">${escapeHtml(app.department) || '\u2014'}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);" class="mb-6">
+            <div>
+              <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">Status</div>
+              <div>${applicationBadge(app.status)}</div>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">Applied</div>
+              <div class="text-sm font-mono">${formatDate(app.created_at || app.applied_date)}</div>
+            </div>
+          </div>
+          ${app.cover_letter ? `
+            <div class="mb-6">
+              <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">Cover Letter</div>
+              <div class="text-sm" style="background:var(--color-surface);padding:var(--space-4);border-radius:var(--radius-lg);white-space:pre-wrap;line-height:1.7;">${escapeHtml(app.cover_letter)}</div>
+            </div>
+          ` : ''}
+          ${app.cv_url ? `
+            <div class="mb-6">
+              <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">CV / Resume</div>
+              <div class="text-sm"><a href="${escapeHtml(app.cv_url)}" target="_blank" style="color:var(--color-gold);text-decoration:underline;">View CV</a></div>
+            </div>
+          ` : ''}
+          ${app.rejection_reason ? `
+            <div class="mb-6">
+              <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">Rejection Reason</div>
+              <div class="text-sm" style="background:var(--color-danger-bg);padding:var(--space-4);border-radius:var(--radius-lg);white-space:pre-wrap;line-height:1.7;color:var(--color-danger);">${escapeHtml(app.rejection_reason)}</div>
+            </div>
+          ` : ''}
+          ${app.correction_notes ? `
+            <div class="mb-6">
+              <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">Correction Notes</div>
+              <div class="text-sm" style="background:var(--color-info-bg);padding:var(--space-4);border-radius:var(--radius-lg);white-space:pre-wrap;line-height:1.7;color:var(--color-info);">${escapeHtml(app.correction_notes)}</div>
+            </div>
+          ` : ''}
+        `;
+        openModal('viewModal');
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    function approveApplication(id, name) {
+      confirmDialog(
+        'Approve Application',
+        'Approve "' + name + '"? This will mark the application as approved.',
+        async () => {
+          try {
+            await apiRequest('/applications/' + id + '/approve', { method: 'POST' });
+            loadApplications();
+          } catch (err) {
+            showAlert(document.getElementById('pageAlert'), err.message);
+          }
+        },
+        'Approve',
+        false
+      );
+    }
+
+    function openRejectModal(id, name) {
+      document.getElementById('rejectTarget').textContent = 'Rejecting application for "' + name + '".';
+      document.getElementById('rejectReason').value = '';
+      document.getElementById('rejectFormAlert').innerHTML = '';
+      document.getElementById('rejectModal').dataset.appId = id;
+      openModal('rejectModal');
+    }
+
+    document.getElementById('rejectForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('rejectModal').dataset.appId;
+      const reason = document.getElementById('rejectReason').value;
+      try {
+        await apiRequest('/applications/' + id + '/reject', {
+          method: 'POST',
+          body: JSON.stringify({ rejection_reason: reason }),
+        });
+        closeModal('rejectModal');
+        loadApplications();
+      } catch (err) {
+        showAlert(document.getElementById('rejectFormAlert'), err.message);
+      }
+    });
+
+    function openCorrectionModal(id, name) {
+      document.getElementById('correctionTarget').textContent = 'Requesting correction for "' + name + '".';
+      document.getElementById('correctionNotes').value = '';
+      document.getElementById('correctionFormAlert').innerHTML = '';
+      document.getElementById('correctionModal').dataset.appId = id;
+      openModal('correctionModal');
+    }
+
+    document.getElementById('correctionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('correctionModal').dataset.appId;
+      const notes = document.getElementById('correctionNotes').value;
+      try {
+        await apiRequest('/applications/' + id + '/request-correction', {
+          method: 'POST',
+          body: JSON.stringify({ notes: notes }),
+        });
+        closeModal('correctionModal');
+        loadApplications();
+      } catch (err) {
+        showAlert(document.getElementById('correctionFormAlert'), err.message);
+      }
+    });
+
+    function openAddModal() {
+      document.getElementById('addForm').reset();
+      document.getElementById('addFormAlert').innerHTML = '';
+      openModal('addModal');
+    }
+
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById('addFormAlert');
+      const payload = {
+        full_name: document.getElementById('add_full_name').value,
+        email: document.getElementById('add_email').value,
+        phone: document.getElementById('add_phone').value,
+        university: document.getElementById('add_university').value,
+        department: document.getElementById('add_department').value,
+        status: document.getElementById('add_status').value,
+        cover_letter: document.getElementById('add_cover_letter').value,
+        cv_url: document.getElementById('add_cv_url').value,
+      };
+      try {
+        await apiRequest('/applications', { method: 'POST', body: JSON.stringify(payload) });
+        closeModal('addModal');
+        loadApplications();
+      } catch (err) {
+        showAlert(alertEl, err.message);
+      }
+    });
+
+    document.getElementById('searchInput').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') loadApplications();
+    });
+
+    document.getElementById('universityFilter').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') loadApplications();
+    });
+
+    loadApplications();
+  </script>
+</body>
+</html>

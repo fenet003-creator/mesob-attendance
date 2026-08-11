@@ -3,56 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attendance History - BG Mesob</title>
+  <title>Attendance History — BG Mesob</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <button class="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
   <div class="app-layout">
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main-content">
       <div class="page-header">
-        <h1>Attendance History</h1>
+        <div>
+          <h1>Attendance History</h1>
+          <p class="page-subtitle">View your attendance records over time</p>
+        </div>
       </div>
 
       <div id="pageAlert"></div>
 
-      <div class="search-bar">
-        <select id="periodFilter">
-          <option value="">All Time</option>
-          <option value="daily">Today</option>
-          <option value="weekly">This Week</option>
-          <option value="monthly">This Month</option>
-        </select>
-        <select id="statusFilter">
-          <option value="">All Status</option>
-          <option value="present">Present</option>
-          <option value="late">Late</option>
-          <option value="absent">Absent</option>
-        </select>
-        <button class="btn btn-primary" onclick="loadHistory()">Filter</button>
+      <div class="card" style="margin-bottom:var(--space-6);">
+        <div class="card-header">
+          <h2>Filter Records</h2>
+        </div>
+        <div class="card-body">
+          <div class="search-bar" style="margin-bottom:0;">
+            <select id="periodFilter">
+              <option value="">All Time</option>
+              <option value="daily">Today</option>
+              <option value="weekly">This Week</option>
+              <option value="monthly">This Month</option>
+            </select>
+            <select id="statusFilter">
+              <option value="">All Status</option>
+              <option value="present">Present</option>
+              <option value="late">Late</option>
+              <option value="absent">Absent</option>
+            </select>
+            <button class="btn btn-primary" onclick="loadHistory()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Filter
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="card">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Check In</th>
-                <th>Check Out</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="historyTable">
-              <tr><td colspan="4" class="empty-state"><div class="spinner"></div></td></tr>
-            </tbody>
-          </table>
+        <div class="card-header">
+          <h2>Records</h2>
+          <div class="card-header-actions">
+            <span class="text-sm text-muted" id="recordCount"></span>
+          </div>
+        </div>
+        <div class="card-body-compact">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="historyTable">
+                <tr><td colspan="4" class="empty-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </main>
   </div>
   <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
   <script>
     requireAuth('intern');
     document.getElementById('sidebar').innerHTML = renderSidebar('intern', 'history');
@@ -67,15 +92,17 @@
       try {
         const records = await apiRequest('/attendance/history?' + params);
         const tbody = document.getElementById('historyTable');
+        document.getElementById('recordCount').textContent = records.length + ' record' + (records.length !== 1 ? 's' : '');
+
         if (records.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No attendance records found</td></tr>';
+          tbody.innerHTML = renderEmptyState('No attendance records found');
           return;
         }
         tbody.innerHTML = records.map(r => `
           <tr>
-            <td>${formatDate(r.attendance_date)}</td>
-            <td>${formatTime(r.check_in)}</td>
-            <td>${formatTime(r.check_out)}</td>
+            <td class="font-bold">${formatDate(r.attendance_date)}</td>
+            <td class="font-mono">${formatTime(r.check_in)}</td>
+            <td class="font-mono">${formatTime(r.check_out)}</td>
             <td>${statusBadge(r.attendance_status)}</td>
           </tr>
         `).join('');

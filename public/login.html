@@ -3,30 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - BG Mesob Attendance</title>
+  <title>Sign In — BG Mesob</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
   <div class="login-page">
     <div class="login-card">
-      <div class="logo-badge">BG Mesob</div>
-      <h1>Attendance System</h1>
-      <p class="subtitle">Sign in to manage or record internship attendance</p>
+      <div class="login-brand">
+        <div class="login-brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <h1>BG Mesob</h1>
+        <p>Internship Attendance Platform</p>
+      </div>
       <div id="alert"></div>
-      <form id="loginForm">
+      <form class="login-form" id="loginForm">
         <div class="form-group">
           <label for="username">Username</label>
-          <input type="text" id="username" name="username" required autocomplete="username" placeholder="Enter username" maxlength="100">
+          <input type="text" id="username" name="username" required autocomplete="username" placeholder="Enter your username" maxlength="100">
         </div>
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter password" maxlength="255">
+          <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password" maxlength="255">
         </div>
         <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Sign In</button>
       </form>
+      <div class="login-footer">
+        <span>&copy; 2026 BG Mesob. All rights reserved.</span>
+      </div>
     </div>
   </div>
   <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
   <script>
     const user = getUser();
     if (user && getToken()) {
@@ -36,9 +44,9 @@
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('loginBtn');
-      const alert = document.getElementById('alert');
+      const alertEl = document.getElementById('alert');
       btn.disabled = true;
-      btn.textContent = 'Signing in...';
+      btn.innerHTML = '<span class="spinner spinner-sm"></span> Signing in\u2026';
 
       try {
         const data = await apiRequest('/auth/login', {
@@ -53,7 +61,7 @@
           ? '/admin/dashboard.html'
           : '/intern/dashboard.html';
       } catch (err) {
-        showAlert(alert, err.message);
+        showAlert(alertEl, err.message);
         btn.disabled = false;
         btn.textContent = 'Sign In';
       }

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Departments — BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Departments</h1>
+          <p class="page-subtitle">Manage organizational departments</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-primary" onclick="openAddModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Department
+          </button>
+        </div>
+      </div>
+
+      <div id="pageAlert"></div>
+
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by department name\u2026">
+        <select id="statusFilter">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <button class="btn btn-outline" onclick="loadDepartments()">Search</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>All Departments</h2>
+          <div class="card-header-actions">
+            <span class="text-sm text-muted" id="deptCount"></span>
+          </div>
+        </div>
+        <div class="card-body-compact">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Head</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="deptBody">
+                <tr><td colspan="5" class="empty-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="deptModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Department</h3>
+        <button class="modal-close" onclick="closeModal('deptModal')">&times;</button>
+      </div>
+      <form id="deptForm">
+        <div class="modal-body">
+          <div id="formAlert"></div>
+          <input type="hidden" id="deptId">
+          <div class="form-group">
+            <label>Name <span class="required">*</span></label>
+            <input type="text" id="deptName" required maxlength="150" placeholder="e.g. Engineering">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="deptDescription" rows="3" maxlength="500" placeholder="Brief description of the department"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Head</label>
+            <input type="text" id="deptHead" maxlength="150" placeholder="e.g. Dr. Abebe Kebede">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="deptStatus">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('deptModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">Save Department</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    requireAuth('admin');
+    document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'departments');
+    let editingId = null;
+
+    async function loadDepartments() {
+      const search = document.getElementById('searchInput').value;
+      const status = document.getElementById('statusFilter').value;
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+
+      try {
+        const depts = await apiRequest('/departments?' + params);
+        const tbody = document.getElementById('deptBody');
+        document.getElementById('deptCount').textContent = depts.length + ' department' + (depts.length !== 1 ? 's' : '');
+
+        if (depts.length === 0) {
+          tbody.innerHTML = renderEmptyState('No departments found');
+          return;
+        }
+
+        tbody.innerHTML = depts.map(d => `
+          <tr>
+            <td class="font-bold">${escapeHtml(d.name)}</td>
+            <td class="text-sm text-muted">${escapeHtml(d.description) || '\u2014'}</td>
+            <td>${escapeHtml(d.head) || '\u2014'}</td>
+            <td><span class="badge badge-${d.status === 'active' ? 'active' : 'inactive'}">${escapeHtml(d.status)}</span></td>
+            <td>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-ghost" data-edit="${d.id}" aria-label="Edit">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn btn-sm btn-ghost" data-delete="${d.id}" data-name="${escapeHtml(d.name)}" aria-label="Delete" style="color:var(--color-danger);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    document.getElementById('deptBody').addEventListener('click', (e) => {
+      const editBtn = e.target.closest('[data-edit]');
+      if (editBtn) return editDepartment(editBtn.dataset.edit);
+      const deleteBtn = e.target.closest('[data-delete]');
+      if (deleteBtn) return deleteDepartment(deleteBtn.dataset.delete, deleteBtn.dataset.name);
+    });
+
+    function openAddModal() {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Add Department';
+      document.getElementById('deptForm').reset();
+      document.getElementById('deptId').value = '';
+      document.getElementById('deptStatus').value = 'active';
+      document.getElementById('saveBtn').textContent = 'Save Department';
+      openModal('deptModal');
+    }
+
+    async function editDepartment(id) {
+      try {
+        const dept = await apiRequest('/departments/' + id);
+        editingId = id;
+        document.getElementById('modalTitle').textContent = 'Edit Department';
+        document.getElementById('deptId').value = id;
+        document.getElementById('deptName').value = dept.name;
+        document.getElementById('deptDescription').value = dept.description || '';
+        document.getElementById('deptHead').value = dept.head || '';
+        document.getElementById('deptStatus').value = dept.status || 'active';
+        document.getElementById('saveBtn').textContent = 'Update Department';
+        openModal('deptModal');
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    async function deleteDepartment(id, name) {
+      confirmDialog(
+        'Delete Department',
+        'Delete "' + name + '"? This action cannot be undone.',
+        async () => {
+          try {
+            await apiRequest('/departments/' + id, { method: 'DELETE' });
+            loadDepartments();
+          } catch (err) {
+            showAlert(document.getElementById('pageAlert'), err.message);
+          }
+        },
+        'Delete',
+        true
+      );
+    }
+
+    document.getElementById('deptForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById('formAlert');
+      const body = {
+        name: document.getElementById('deptName').value,
+        description: document.getElementById('deptDescription').value,
+        head: document.getElementById('deptHead').value,
+        status: document.getElementById('deptStatus').value,
+      };
+
+      try {
+        if (editingId) {
+          await apiRequest('/departments/' + editingId, { method: 'PUT', body: JSON.stringify(body) });
+        } else {
+          await apiRequest('/departments', { method: 'POST', body: JSON.stringify(body) });
+        }
+        closeModal('deptModal');
+        loadDepartments();
+      } catch (err) {
+        showAlert(alertEl, err.message);
+      }
+    });
+
+    document.getElementById('searchInput').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') loadDepartments();
+    });
+
+    loadDepartments();
+  </script>
+</body>
+</html>

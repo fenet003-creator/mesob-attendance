@@ -3,70 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings - BG Mesob</title>
+  <title>Settings — BG Mesob</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <button class="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
   <div class="app-layout">
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main-content">
       <div class="page-header">
-        <h1>Settings</h1>
+        <div>
+          <h1>Settings</h1>
+          <p class="page-subtitle">System administration and configuration</p>
+        </div>
       </div>
 
-      <div class="card" style="max-width: 480px;">
-        <h2>Attendance Rules</h2>
-        <p style="color: var(--gray-500); font-size: 0.875rem; margin-bottom: 1.25rem;">
-          Configure the daily time boundaries used to mark interns as Present, Late, or Absent.
-        </p>
-        <div id="rulesAlert"></div>
-        <form id="rulesForm">
-          <div class="form-group">
-            <label>Work Start Time</label>
-            <input type="time" id="work_start_time" required>
-            <small style="color: var(--gray-500);">Informational — when the workday begins</small>
-          </div>
-          <div class="form-group">
-            <label>Late Threshold (Present → Late)</label>
-            <input type="time" id="late_threshold" required>
-            <small style="color: var(--gray-500);">Check-in before this time = Present</small>
-          </div>
-          <div class="form-group">
-            <label>Absent Threshold (Late → Absent)</label>
-            <input type="time" id="absent_threshold" required>
-            <small style="color: var(--gray-500);">Check-in after this time = Absent</small>
-          </div>
-          <button type="submit" class="btn btn-primary">Save Rules</button>
-        </form>
-      </div>
+      <div id="pageAlert"></div>
 
-      <div class="card" style="max-width: 480px;">
-        <h2>Change Password</h2>
-        <div id="passwordAlert"></div>
-        <form id="passwordForm">
-          <div class="form-group">
-            <label>Current Password</label>
-            <input type="password" id="currentPassword" required>
+      <div class="settings-grid">
+        <div class="card">
+          <div class="card-header">
+            <h2>Attendance Rules</h2>
           </div>
-          <div class="form-group">
-            <label>New Password</label>
-            <input type="password" id="newPassword" required minlength="6">
-            <small style="color: var(--gray-500);">Minimum 6 characters</small>
+          <div class="card-body">
+            <p class="text-sm text-muted mb-6">Configure the daily time boundaries used to mark interns as Present, Late, or Absent.</p>
+            <div id="rulesAlert"></div>
+            <form id="rulesForm">
+              <div class="form-group">
+                <label>Work Start Time</label>
+                <input type="time" id="work_start_time" required>
+                <div class="form-hint">Informational — when the workday begins</div>
+              </div>
+              <div class="form-group">
+                <label>Late Threshold</label>
+                <input type="time" id="late_threshold" required>
+                <div class="form-hint">Check-in before this time = Present</div>
+              </div>
+              <div class="form-group">
+                <label>Absent Threshold</label>
+                <input type="time" id="absent_threshold" required>
+                <div class="form-hint">Check-in after this time = Absent</div>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+                Save Rules
+              </button>
+            </form>
           </div>
-          <div class="form-group">
-            <label>Confirm New Password</label>
-            <input type="password" id="confirmPassword" required minlength="6">
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Change Password</h2>
           </div>
-          <button type="submit" class="btn btn-primary">Update Password</button>
-        </form>
+          <div class="card-body">
+            <p class="text-sm text-muted mb-6">Update your admin account password.</p>
+            <div id="passwordAlert"></div>
+            <form id="passwordForm">
+              <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="currentPassword" required placeholder="Enter current password">
+              </div>
+              <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="newPassword" required minlength="6" placeholder="Enter new password">
+                <div class="form-hint">Minimum 6 characters</div>
+              </div>
+              <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" id="confirmPassword" required minlength="6" placeholder="Confirm new password">
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Update Password
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>System Information</h2>
+          </div>
+          <div class="card-body">
+            <div id="systemInfo" class="system-info-grid">
+              <div class="info-row">
+                <span class="info-label">Version</span>
+                <span class="info-value font-mono" id="sysVersion">1.0.0</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Environment</span>
+                <span class="info-value" id="sysEnv">production</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Database</span>
+                <span class="info-value" id="sysDb">SQLite</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Quick Actions</h2>
+          </div>
+          <div class="card-body">
+            <p class="text-sm text-muted mb-6">System maintenance and data management tools.</p>
+            <div id="actionsAlert"></div>
+            <div class="actions-list">
+              <button class="btn btn-outline" onclick="initDatabase()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2v20M2 12h20"/></svg>
+                Initialize / Clear Database
+              </button>
+              <button class="btn btn-outline" onclick="exportData()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export All Data
+              </button>
+              <button class="btn btn-outline" onclick="viewHealth()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                View System Health
+              </button>
+            </div>
+            <div id="healthResult" class="mt-4 hidden"></div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
   <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
   <script>
-    requireAuth('admin');
-    document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'settings');
+    const user = requireAuth('admin');
+    if (user) {
+      document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'settings');
+    }
 
     async function loadSettings() {
       try {
@@ -81,17 +154,17 @@
 
     document.getElementById('rulesForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const alert = document.getElementById('rulesAlert');
+      const alertEl = document.getElementById('rulesAlert');
       const workStart = document.getElementById('work_start_time').value;
       const lateThreshold = document.getElementById('late_threshold').value;
       const absentThreshold = document.getElementById('absent_threshold').value;
 
       if (lateThreshold <= workStart) {
-        showAlert(alert, 'Late threshold must be after work start time');
+        showAlert(alertEl, 'Late threshold must be after work start time');
         return;
       }
       if (absentThreshold <= lateThreshold) {
-        showAlert(alert, 'Absent threshold must be after late threshold');
+        showAlert(alertEl, 'Absent threshold must be after late threshold');
         return;
       }
 
@@ -100,20 +173,20 @@
           method: 'PUT',
           body: JSON.stringify({ work_start_time: workStart, late_threshold: lateThreshold, absent_threshold: absentThreshold }),
         });
-        showAlert(alert, 'Attendance rules updated successfully', 'success');
+        showAlert(alertEl, 'Attendance rules updated successfully', 'success');
       } catch (err) {
-        showAlert(alert, err.message);
+        showAlert(alertEl, err.message);
       }
     });
 
     document.getElementById('passwordForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const alert = document.getElementById('passwordAlert');
+      const alertEl = document.getElementById('passwordAlert');
       const newPass = document.getElementById('newPassword').value;
       const confirm = document.getElementById('confirmPassword').value;
 
       if (newPass !== confirm) {
-        showAlert(alert, 'Passwords do not match');
+        showAlert(alertEl, 'Passwords do not match');
         return;
       }
 
@@ -125,12 +198,69 @@
             newPassword: newPass,
           }),
         });
-        showAlert(alert, 'Password updated successfully', 'success');
+        showAlert(alertEl, 'Password updated successfully', 'success');
         document.getElementById('passwordForm').reset();
       } catch (err) {
-        showAlert(alert, err.message);
+        showAlert(alertEl, err.message);
       }
     });
+
+    async function initDatabase() {
+      confirmDialog(
+        'Initialize Database',
+        'This will reset the database to its default state. All existing data will be cleared. This action cannot be undone.',
+        async () => {
+          try {
+            await apiRequest('/admin/init-db', { method: 'POST' });
+            showAlert(document.getElementById('actionsAlert'), 'Database initialized successfully', 'success');
+          } catch (err) {
+            showAlert(document.getElementById('actionsAlert'), err.message);
+          }
+        },
+        'Initialize',
+        true
+      );
+    }
+
+    async function exportData() {
+      try {
+        const response = await apiRequest('/admin/export-all', { raw: true });
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mesob-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showAlert(document.getElementById('actionsAlert'), 'Export downloaded successfully', 'success');
+      } catch (err) {
+        showAlert(document.getElementById('actionsAlert'), err.message);
+      }
+    }
+
+    async function viewHealth() {
+      const container = document.getElementById('healthResult');
+      container.classList.remove('hidden');
+      container.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const health = await apiRequest('/health');
+        container.innerHTML = `
+          <div class="health-card">
+            <div class="health-row">
+              <span class="health-status ${health.status === 'ok' ? 'text-success' : 'text-danger'}">${health.status === 'ok' ? 'Healthy' : 'Degraded'}</span>
+              <span class="text-sm text-muted">Uptime: ${Math.floor(health.uptime / 3600)}h ${Math.floor((health.uptime % 3600) / 60)}m</span>
+            </div>
+            <div class="health-row">
+              <span class="text-sm">Database: ${health.database || 'OK'}</span>
+              <span class="text-sm text-muted">Memory: ${Math.round(health.memory ? health.memory.heapUsed / 1024 / 1024 : 0)} MB</span>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = '<div class="alert alert-danger">Failed to fetch health data: ' + escapeHtml(err.message) + '</div>';
+      }
+    }
 
     loadSettings();
   </script>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Announcements — BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .priority-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:var(--radius-full); font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; line-height:1.6; }
+    .priority-low { background:var(--color-info-soft); color:var(--color-info); }
+    .priority-normal { background:var(--color-success-soft); color:var(--color-success); }
+    .priority-high { background:var(--color-warning-soft); color:var(--color-warning); }
+    .priority-urgent { background:var(--color-danger-soft); color:var(--color-danger); }
+    .status-active { color:var(--color-success); }
+    .status-inactive { color:var(--color-ink-faint); }
+    .toggle-switch { position:relative; width:36px; height:20px; border-radius:var(--radius-full); background:var(--color-border); cursor:pointer; transition:background var(--duration-fast); border:none; padding:0; }
+    .toggle-switch.on { background:var(--color-success); }
+    .toggle-switch::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform var(--duration-fast) var(--ease-out); box-shadow:var(--shadow-xs); }
+    .toggle-switch.on::after { transform:translateX(16px); }
+    .content-preview { max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:var(--text-sm); color:var(--color-ink-muted); }
+    .audience-badge { display:inline-flex; padding:2px 8px; border-radius:var(--radius-full); font-size:0.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; background:var(--color-surface-warm); color:var(--color-ink-muted); }
+  </style>
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Announcements</h1>
+          <p class="page-subtitle">Manage platform-wide announcements and notices</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-primary" onclick="openCreateModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Create Announcement
+          </button>
+        </div>
+      </div>
+
+      <div id="pageAlert"></div>
+
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search announcements..." onkeyup="if(event.key==='Enter')loadAnnouncements()">
+        <select id="audienceFilter" onchange="loadAnnouncements()">
+          <option value="">All Audiences</option>
+          <option value="all">All Users</option>
+          <option value="interns">Interns</option>
+          <option value="supervisors">Supervisors</option>
+          <option value="admins">Admins</option>
+        </select>
+        <select id="statusFilter" onchange="loadAnnouncements()">
+          <option value="">All Status</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+        <button class="btn btn-outline" onclick="loadAnnouncements()">Search</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>All Announcements</h2>
+          <div class="card-header-actions">
+            <span class="text-sm text-muted" id="annCount"></span>
+          </div>
+        </div>
+        <div class="card-body-compact">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Audience</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="annTable">
+                <tr><td colspan="6" class="empty-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="annModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Create Announcement</h3>
+        <button class="modal-close" onclick="closeModal('annModal')">&times;</button>
+      </div>
+      <form id="annForm">
+        <div class="modal-body">
+          <div id="formAlert"></div>
+          <input type="hidden" id="annId">
+          <div class="form-group">
+            <label>Title <span class="required">*</span></label>
+            <input type="text" id="annTitle" required maxlength="200" placeholder="e.g. Holiday Notice">
+          </div>
+          <div class="form-group">
+            <label>Content <span class="required">*</span></label>
+            <textarea id="annContent" required rows="6" maxlength="5000" placeholder="Write your announcement here..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Target Audience <span class="required">*</span></label>
+              <select id="annAudience" required>
+                <option value="all">All Users</option>
+                <option value="interns">Interns</option>
+                <option value="supervisors">Supervisors</option>
+                <option value="admins">Admins</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Priority <span class="required">*</span></label>
+              <select id="annPriority" required>
+                <option value="normal">Normal</option>
+                <option value="low">Low</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" id="activeGroup">
+            <label>Active</label>
+            <label class="flex items-center gap-2" style="cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500;font-size:var(--text-sm);">
+              <input type="checkbox" id="annActive" checked style="width:16px;height:16px;accent-color:var(--color-gold);">
+              Publish immediately
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('annModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">Create Announcement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    const user = requireAuth('admin');
+    if (user) {
+      document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'announcements');
+    }
+
+    let editingId = null;
+
+    async function loadAnnouncements() {
+      const search = document.getElementById('searchInput').value;
+      const audience = document.getElementById('audienceFilter').value;
+      const isActive = document.getElementById('statusFilter').value;
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (audience) params.set('target_audience', audience);
+      if (isActive !== '') params.set('is_active', isActive);
+
+      try {
+        const anns = await apiRequest('/announcements?' + params);
+        const arr = Array.isArray(anns) ? anns : (anns.announcements || []);
+        document.getElementById('annCount').textContent = arr.length + ' announcement' + (arr.length !== 1 ? 's' : '');
+
+        const tbody = document.getElementById('annTable');
+        if (!arr.length) {
+          tbody.innerHTML = renderEmptyState('No announcements found');
+          return;
+        }
+        tbody.innerHTML = arr.map(a => `
+          <tr>
+            <td>
+              <div class="font-bold">${escapeHtml(a.title)}</div>
+              <div class="content-preview">${escapeHtml(a.content)}</div>
+            </td>
+            <td><span class="audience-badge">${escapeHtml(a.target_audience || 'all')}</span></td>
+            <td><span class="priority-badge priority-${a.priority || 'normal'}">${escapeHtml(a.priority || 'normal')}</span></td>
+            <td>
+              <span class="${a.is_active ? 'status-active' : 'status-inactive'} font-bold" style="font-size:var(--text-sm);">
+                ${a.is_active ? 'Active' : 'Inactive'}
+              </span>
+            </td>
+            <td class="font-mono text-sm">${formatDate(a.created_at)}</td>
+            <td>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-ghost" data-edit="${a.id}" aria-label="Edit">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn btn-sm btn-ghost" data-toggle="${a.id}" data-active="${a.is_active ? '1' : '0'}" aria-label="Toggle active">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </button>
+                <button class="btn btn-sm btn-ghost" data-delete="${a.id}" data-name="${escapeHtml(a.title)}" aria-label="Delete" style="color:var(--color-danger);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    document.getElementById('annTable').addEventListener('click', async (e) => {
+      const editBtn = e.target.closest('[data-edit]');
+      if (editBtn) return editAnnouncement(editBtn.dataset.edit);
+
+      const toggleBtn = e.target.closest('[data-toggle]');
+      if (toggleBtn) {
+        const id = toggleBtn.dataset.toggle;
+        const isActive = toggleBtn.dataset.active === '1';
+        try {
+          await apiRequest('/announcements/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({ is_active: !isActive }),
+          });
+          loadAnnouncements();
+        } catch (err) {
+          showAlert(document.getElementById('pageAlert'), err.message);
+        }
+        return;
+      }
+
+      const deleteBtn = e.target.closest('[data-delete]');
+      if (deleteBtn) return deleteAnnouncement(deleteBtn.dataset.delete, deleteBtn.dataset.name);
+    });
+
+    function openCreateModal() {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Create Announcement';
+      document.getElementById('annForm').reset();
+      document.getElementById('annId').value = '';
+      document.getElementById('annActive').checked = true;
+      document.getElementById('activeGroup').style.display = '';
+      document.getElementById('saveBtn').textContent = 'Create Announcement';
+      openModal('annModal');
+    }
+
+    async function editAnnouncement(id) {
+      try {
+        const ann = await apiRequest('/announcements/' + id);
+        editingId = id;
+        document.getElementById('modalTitle').textContent = 'Edit Announcement';
+        document.getElementById('annId').value = id;
+        document.getElementById('annTitle').value = ann.title;
+        document.getElementById('annContent').value = ann.content;
+        document.getElementById('annAudience').value = ann.target_audience || 'all';
+        document.getElementById('annPriority').value = ann.priority || 'normal';
+        document.getElementById('annActive').checked = !!ann.is_active;
+        document.getElementById('saveBtn').textContent = 'Update Announcement';
+        openModal('annModal');
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    async function deleteAnnouncement(id, name) {
+      confirmDialog(
+        'Delete Announcement',
+        'Delete "' + name + '"? This action cannot be undone.',
+        async () => {
+          try {
+            await apiRequest('/announcements/' + id, { method: 'DELETE' });
+            loadAnnouncements();
+          } catch (err) {
+            showAlert(document.getElementById('pageAlert'), err.message);
+          }
+        },
+        'Delete',
+        true
+      );
+    }
+
+    document.getElementById('annForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById('formAlert');
+      const payload = {
+        title: document.getElementById('annTitle').value,
+        content: document.getElementById('annContent').value,
+        target_audience: document.getElementById('annAudience').value,
+        priority: document.getElementById('annPriority').value,
+        is_active: document.getElementById('annActive').checked,
+      };
+
+      try {
+        if (editingId) {
+          await apiRequest('/announcements/' + editingId, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+          });
+        } else {
+          await apiRequest('/announcements', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+        }
+        closeModal('annModal');
+        loadAnnouncements();
+      } catch (err) {
+        showAlert(alertEl, err.message);
+      }
+    });
+
+    loadAnnouncements();
+  </script>
+</body>
+</html>

@@ -3,23 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Interns - BG Mesob</title>
+  <title>Manage Interns — BG Mesob</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <button class="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
   <div class="app-layout">
     <aside class="sidebar" id="sidebar"></aside>
     <main class="main-content">
       <div class="page-header">
-        <h1>Intern Management</h1>
-        <button class="btn btn-primary" onclick="openModal()">+ Add Intern</button>
+        <div>
+          <h1>Intern Management</h1>
+          <p class="page-subtitle">Add, edit, and manage intern accounts</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-primary" onclick="openModal('internModal')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Intern
+          </button>
+        </div>
       </div>
 
       <div id="pageAlert"></div>
 
       <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="Search by name, university, department...">
+        <input type="text" id="searchInput" placeholder="Search by name, university, department\u2026">
         <select id="statusFilter">
           <option value="">All Status</option>
           <option value="active">Active</option>
@@ -30,23 +41,31 @@
       </div>
 
       <div class="card">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>University</th>
-                <th>Department</th>
-                <th>Start Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="internsTable">
-              <tr><td colspan="7" class="empty-state"><div class="spinner"></div></td></tr>
-            </tbody>
-          </table>
+        <div class="card-header">
+          <h2>All Interns</h2>
+          <div class="card-header-actions">
+            <span class="text-sm text-muted" id="internCount"></span>
+          </div>
+        </div>
+        <div class="card-body-compact">
+          <div class="table-wrapper">
+            <table id="internsTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>University</th>
+                  <th>Department</th>
+                  <th>Start Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="internsBody">
+                <tr><td colspan="7" class="empty-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </main>
@@ -56,7 +75,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3 id="modalTitle">Add Intern</h3>
-        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <button class="modal-close" onclick="closeModal('internModal')">&times;</button>
       </div>
       <form id="internForm">
         <div class="modal-body">
@@ -64,28 +83,28 @@
           <input type="hidden" id="internId">
           <div class="form-row">
             <div class="form-group">
-              <label>Full Name *</label>
-              <input type="text" id="full_name" required maxlength="150">
+              <label>Full Name <span class="required">*</span></label>
+              <input type="text" id="full_name" required maxlength="150" placeholder="e.g. Abebe Kebede">
             </div>
             <div class="form-group">
-              <label>Email *</label>
-              <input type="email" id="email" required maxlength="150">
+              <label>Email <span class="required">*</span></label>
+              <input type="email" id="email" required maxlength="150" placeholder="e.g. abebe@university.edu">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Phone</label>
-              <input type="tel" id="phone" maxlength="20">
+              <input type="tel" id="phone" maxlength="20" placeholder="e.g. +251911234567">
             </div>
             <div class="form-group">
               <label>University</label>
-              <input type="text" id="university" maxlength="150">
+              <input type="text" id="university" maxlength="150" placeholder="e.g. Addis Ababa University">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Department</label>
-              <input type="text" id="department" maxlength="150">
+              <input type="text" id="department" maxlength="150" placeholder="e.g. Computer Science">
             </div>
             <div class="form-group">
               <label>Status</label>
@@ -98,7 +117,7 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Start Date *</label>
+              <label>Start Date <span class="required">*</span></label>
               <input type="date" id="start_date" required>
             </div>
             <div class="form-group">
@@ -108,28 +127,30 @@
           </div>
           <div class="form-row" id="credentialsSection">
             <div class="form-group">
-              <label>Username *</label>
-              <input type="text" id="username" maxlength="100">
+              <label>Username <span class="required">*</span></label>
+              <input type="text" id="username" maxlength="100" placeholder="Login username">
             </div>
             <div class="form-group">
-              <label>Password *</label>
-              <input type="password" id="password" minlength="6">
+              <label>Password <span class="required">*</span></label>
+              <input type="password" id="password" minlength="6" placeholder="Min 6 characters">
             </div>
           </div>
           <div class="form-group">
             <label>Profile Photo</label>
             <input type="file" id="profile_photo" accept="image/*">
+            <div class="form-hint">Optional. JPG, PNG, or GIF.</div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-outline" onclick="closeModal('internModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">Save Intern</button>
         </div>
       </form>
     </div>
   </div>
 
   <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
   <script>
     requireAuth('admin');
     document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'interns');
@@ -144,22 +165,30 @@
 
       try {
         const interns = await apiRequest('/interns?' + params);
-        const tbody = document.getElementById('internsTable');
+        const tbody = document.getElementById('internsBody');
+        document.getElementById('internCount').textContent = interns.length + ' intern' + (interns.length !== 1 ? 's' : '');
+
         if (interns.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No interns found</td></tr>';
+          tbody.innerHTML = renderEmptyState('No interns found');
           return;
         }
         tbody.innerHTML = interns.map(i => `
           <tr>
-            <td>${escapeHtml(i.full_name)}</td>
+            <td class="font-bold">${escapeHtml(i.full_name)}</td>
             <td>${escapeHtml(i.email)}</td>
-            <td>${escapeHtml(i.university) || '-'}</td>
-            <td>${escapeHtml(i.department) || '-'}</td>
-            <td>${formatDate(i.start_date)}</td>
-            <td><span class="badge badge-${i.status === 'active' ? 'active' : 'inactive'}">${escapeHtml(i.status)}</span></td>
+            <td>${escapeHtml(i.university) || '\u2014'}</td>
+            <td>${escapeHtml(i.department) || '\u2014'}</td>
+            <td class="font-mono text-sm">${formatDate(i.start_date)}</td>
+            <td><span class="badge badge-${i.status === 'active' ? 'active' : i.status === 'completed' ? 'completed' : 'inactive'}">${escapeHtml(i.status)}</span></td>
             <td>
-              <button class="btn btn-sm btn-outline" data-edit="${i.id}">Edit</button>
-              <button class="btn btn-sm btn-danger" data-delete="${i.id}" data-name="${escapeHtml(i.full_name)}">Delete</button>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-ghost" data-edit="${i.id}" aria-label="Edit">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn btn-sm btn-ghost" data-delete="${i.id}" data-name="${escapeHtml(i.full_name)}" aria-label="Delete" style="color:var(--color-danger);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
             </td>
           </tr>
         `).join('');
@@ -168,26 +197,39 @@
       }
     }
 
-    document.getElementById('internsTable').addEventListener('click', (e) => {
+    document.getElementById('internsBody').addEventListener('click', (e) => {
       const editBtn = e.target.closest('[data-edit]');
       if (editBtn) return editIntern(editBtn.dataset.edit);
       const deleteBtn = e.target.closest('[data-delete]');
       if (deleteBtn) return deleteIntern(deleteBtn.dataset.delete, deleteBtn.dataset.name);
     });
 
-    function openModal() {
+    function openModal(id) {
       editingId = null;
       document.getElementById('modalTitle').textContent = 'Add Intern';
       document.getElementById('internForm').reset();
       document.getElementById('internId').value = '';
-      document.getElementById('credentialsSection').classList.remove('hidden');
+      document.getElementById('credentialsSection').style.display = '';
       document.getElementById('username').required = true;
       document.getElementById('password').required = true;
-      document.getElementById('internModal').classList.add('active');
+      document.getElementById('saveBtn').textContent = 'Save Intern';
+      openModal_byId('internModal');
     }
 
-    function closeModal() {
-      document.getElementById('internModal').classList.remove('active');
+    function openModal_byId(id) {
+      const overlay = document.getElementById(id);
+      if (overlay) {
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModal(id) {
+      const overlay = document.getElementById(id);
+      if (overlay) {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
     }
 
     async function editIntern(id) {
@@ -204,28 +246,36 @@
         document.getElementById('start_date').value = intern.start_date;
         document.getElementById('end_date').value = intern.end_date || '';
         document.getElementById('status').value = intern.status;
-        document.getElementById('credentialsSection').classList.add('hidden');
+        document.getElementById('credentialsSection').style.display = 'none';
         document.getElementById('username').required = false;
         document.getElementById('password').required = false;
-        document.getElementById('internModal').classList.add('active');
+        document.getElementById('saveBtn').textContent = 'Update Intern';
+        openModal_byId('internModal');
       } catch (err) {
         showAlert(document.getElementById('pageAlert'), err.message);
       }
     }
 
     async function deleteIntern(id, name) {
-      if (!confirm('Delete intern "' + name + '"? This cannot be undone.')) return;
-      try {
-        await apiRequest('/interns/' + id, { method: 'DELETE' });
-        loadInterns();
-      } catch (err) {
-        showAlert(document.getElementById('pageAlert'), err.message);
-      }
+      confirmDialog(
+        'Delete Intern',
+        'Delete "' + name + '"? This action cannot be undone.',
+        async () => {
+          try {
+            await apiRequest('/interns/' + id, { method: 'DELETE' });
+            loadInterns();
+          } catch (err) {
+            showAlert(document.getElementById('pageAlert'), err.message);
+          }
+        },
+        'Delete',
+        true
+      );
     }
 
     document.getElementById('internForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const alert = document.getElementById('formAlert');
+      const alertEl = document.getElementById('formAlert');
       const formData = new FormData();
       formData.append('full_name', document.getElementById('full_name').value);
       formData.append('email', document.getElementById('email').value);
@@ -247,10 +297,10 @@
           formData.append('password', document.getElementById('password').value);
           await apiRequest('/interns', { method: 'POST', body: formData });
         }
-        closeModal();
+        closeModal('internModal');
         loadInterns();
       } catch (err) {
-        showAlert(alert, err.message);
+        showAlert(alertEl, err.message);
       }
     });
 

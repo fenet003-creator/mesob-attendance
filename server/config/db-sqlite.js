@@ -104,6 +104,121 @@ function initSchema() {
       setting_key TEXT NOT NULL UNIQUE,
       setting_value TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS supervisors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER UNIQUE,
+      full_name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      phone TEXT,
+      department TEXT,
+      specialization TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS departments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      description TEXT,
+      head TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS applications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      applicant_name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT,
+      university TEXT,
+      department TEXT,
+      field_of_study TEXT,
+      start_date TEXT,
+      end_date TEXT,
+      cover_letter TEXT,
+      documents TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      reviewed_by INTEGER,
+      reviewed_at TEXT,
+      rejection_reason TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS placements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      department_id INTEGER,
+      description TEXT,
+      requirements TEXT,
+      max_interns INTEGER DEFAULT 1,
+      start_date TEXT,
+      end_date TEXT,
+      status TEXT NOT NULL DEFAULT 'open',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS intern_supervisor (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      intern_id INTEGER NOT NULL,
+      supervisor_id INTEGER NOT NULL,
+      assigned_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(intern_id, supervisor_id),
+      FOREIGN KEY (intern_id) REFERENCES interns(id) ON DELETE CASCADE,
+      FOREIGN KEY (supervisor_id) REFERENCES supervisors(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS intern_placement (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      intern_id INTEGER NOT NULL,
+      placement_id INTEGER NOT NULL,
+      assigned_at TEXT DEFAULT (datetime('now')),
+      status TEXT NOT NULL DEFAULT 'active',
+      UNIQUE(intern_id, placement_id),
+      FOREIGN KEY (intern_id) REFERENCES interns(id) ON DELETE CASCADE,
+      FOREIGN KEY (placement_id) REFERENCES placements(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS announcements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      target_audience TEXT NOT NULL DEFAULT 'all',
+      priority TEXT NOT NULL DEFAULT 'normal',
+      created_by INTEGER,
+      is_active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'info',
+      is_read INTEGER DEFAULT 0,
+      link TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      username TEXT,
+      action TEXT NOT NULL,
+      entity_type TEXT,
+      entity_id INTEGER,
+      details TEXT,
+      ip_address TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 
   // Insert default settings

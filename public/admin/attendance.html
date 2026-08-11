@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Management — BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Attendance Management</h1>
+          <p class="page-subtitle">Track and manage intern attendance across the organization</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-outline" onclick="exportSelected()" id="exportBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+        </div>
+      </div>
+
+      <div id="pageAlert"></div>
+
+      <div class="search-bar">
+        <input type="date" id="startDate" placeholder="Start date">
+        <input type="date" id="endDate" placeholder="End date">
+        <input type="text" id="internSearch" placeholder="Search by intern name\u2026">
+        <select id="supervisorFilter">
+          <option value="">All Supervisors</option>
+        </select>
+        <select id="statusFilter">
+          <option value="">All Status</option>
+          <option value="present">Present</option>
+          <option value="late">Late</option>
+          <option value="absent">Absent</option>
+        </select>
+        <select id="departmentFilter">
+          <option value="">All Departments</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadAttendance()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Filter
+        </button>
+      </div>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-card-accent success"></div>
+          <div class="stat-card-label">Total Present</div>
+          <div class="stat-card-value text-success" id="statPresent"><div class="spinner"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent warning"></div>
+          <div class="stat-card-label">Total Late</div>
+          <div class="stat-card-value text-warning" id="statLate"><div class="spinner"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent danger"></div>
+          <div class="stat-card-label">Total Absent</div>
+          <div class="stat-card-value text-danger" id="statAbsent"><div class="spinner"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent gold"></div>
+          <div class="stat-card-label">Attendance Rate</div>
+          <div class="stat-card-value" id="statRate"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Attendance Records</h2>
+          <div class="card-header-actions">
+            <label class="flex items-center gap-2 text-sm text-muted" style="cursor:pointer;">
+              <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"> Select All
+            </label>
+            <span class="text-sm text-muted" id="recordCount"></span>
+          </div>
+        </div>
+        <div class="card-body-compact">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px;"></th>
+                  <th>Date</th>
+                  <th>Intern Name</th>
+                  <th>Department</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceTable">
+                <tr><td colspan="8" class="empty-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Attendance</h3>
+        <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+      </div>
+      <form id="editForm">
+        <div class="modal-body">
+          <div id="editAlert"></div>
+          <input type="hidden" id="editId">
+          <div class="form-group">
+            <label>Intern</label>
+            <input type="text" id="editInternName" disabled style="background:var(--color-surface);">
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="text" id="editDate" disabled style="background:var(--color-surface);">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Check In</label>
+              <input type="time" id="editCheckIn">
+            </div>
+            <div class="form-group">
+              <label>Check Out</label>
+              <input type="time" id="editCheckOut">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Status <span class="required">*</span></label>
+            <select id="editStatus" required>
+              <option value="present">Present</option>
+              <option value="late">Late</option>
+              <option value="absent">Absent</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('editModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    requireAuth('admin');
+    document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'attendance');
+    let allRecords = [];
+
+    async function loadDropdowns() {
+      try {
+        const [interns, supervisors] = await Promise.all([
+          apiRequest('/interns'),
+          apiRequest('/supervisors'),
+        ]);
+
+        const deptSet = new Set();
+        interns.forEach(i => { if (i.department) deptSet.add(i.department); });
+        const deptSelect = document.getElementById('departmentFilter');
+        deptSet.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          deptSelect.appendChild(opt);
+        });
+
+        const supSelect = document.getElementById('supervisorFilter');
+        supervisors.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = s.full_name || s.username;
+          supSelect.appendChild(opt);
+        });
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    async function loadAttendance() {
+      const params = new URLSearchParams();
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const status = document.getElementById('statusFilter').value;
+      const internSearch = document.getElementById('internSearch').value.trim().toLowerCase();
+      const department = document.getElementById('departmentFilter').value;
+
+      if (startDate) params.set('start_date', startDate);
+      if (endDate) params.set('end_date', endDate);
+      if (status) params.set('status', status);
+
+      try {
+        let records;
+        if (startDate || endDate || status) {
+          records = await apiRequest('/attendance/history?' + params);
+        } else {
+          records = await apiRequest('/attendance/today');
+        }
+
+        if (internSearch) {
+          records = records.filter(r => r.full_name && r.full_name.toLowerCase().includes(internSearch));
+        }
+        if (department) {
+          records = records.filter(r => r.department === department);
+        }
+
+        allRecords = records;
+        document.getElementById('selectAll').checked = false;
+        updateExportBtn();
+        renderTable(records);
+        renderStats(records);
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    function renderStats(records) {
+      const present = records.filter(r => r.attendance_status === 'present').length;
+      const late = records.filter(r => r.attendance_status === 'late').length;
+      const absent = records.filter(r => r.attendance_status === 'absent').length;
+      const total = records.length;
+      const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
+
+      document.getElementById('statPresent').textContent = present;
+      document.getElementById('statLate').textContent = late;
+      document.getElementById('statAbsent').textContent = absent;
+      document.getElementById('statRate').textContent = rate + '%';
+    }
+
+    function renderTable(records) {
+      const tbody = document.getElementById('attendanceTable');
+      document.getElementById('recordCount').textContent = records.length + ' record' + (records.length !== 1 ? 's' : '');
+
+      if (records.length === 0) {
+        tbody.innerHTML = renderEmptyState('No attendance records found');
+        return;
+      }
+
+      tbody.innerHTML = records.map(r => `
+        <tr data-id="${r.id}">
+          <td><input type="checkbox" class="row-check" data-id="${r.id}" onchange="updateExportBtn()"></td>
+          <td class="font-mono text-sm">${formatDate(r.attendance_date)}</td>
+          <td class="font-bold">${escapeHtml(r.full_name)}</td>
+          <td>${escapeHtml(r.department) || '\u2014'}</td>
+          <td class="font-mono">${formatTime(r.check_in)}</td>
+          <td class="font-mono">${formatTime(r.check_out)}</td>
+          <td>${statusBadge(r.attendance_status)}</td>
+          <td>
+            <button class="btn btn-sm btn-ghost" onclick="openEditModal(${JSON.stringify(r).replace(/"/g, '&quot;')})" aria-label="Edit">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openEditModal(record) {
+      document.getElementById('editId').value = record.id;
+      document.getElementById('editInternName').value = record.full_name;
+      document.getElementById('editDate').value = record.attendance_date;
+      document.getElementById('editCheckIn').value = record.check_in || '';
+      document.getElementById('editCheckOut').value = record.check_out || '';
+      document.getElementById('editStatus').value = record.attendance_status;
+      openModal('editModal');
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const body = {
+        attendance_status: document.getElementById('editStatus').value,
+        check_in: document.getElementById('editCheckIn').value || null,
+        check_out: document.getElementById('editCheckOut').value || null,
+      };
+
+      try {
+        await apiRequest('/attendance/' + id, {
+          method: 'PUT',
+          body: JSON.stringify(body),
+        });
+        closeModal('editModal');
+        loadAttendance();
+        showToast('Attendance updated successfully', 'success');
+      } catch (err) {
+        showAlert(document.getElementById('editAlert'), err.message);
+      }
+    });
+
+    function toggleSelectAll() {
+      const checked = document.getElementById('selectAll').checked;
+      document.querySelectorAll('.row-check').forEach(cb => { cb.checked = checked; });
+      updateExportBtn();
+    }
+
+    function updateExportBtn() {
+      const count = document.querySelectorAll('.row-check:checked').length;
+      document.getElementById('exportBtn').disabled = count === 0;
+    }
+
+    function exportSelected() {
+      const selectedIds = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.dataset.id);
+      const selected = allRecords.filter(r => selectedIds.includes(String(r.id)));
+      if (selected.length === 0) return;
+
+      let csv = 'Date,Intern Name,Department,Check In,Check Out,Status\n';
+      selected.forEach(r => {
+        csv += `${r.attendance_date || ''},${r.full_name || ''},${r.department || ''},${r.check_in || ''},${r.check_out || ''},${r.attendance_status || ''}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'attendance-export.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Exported ' + selected.length + ' records', 'success');
+    }
+
+    document.getElementById('internSearch').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') loadAttendance();
+    });
+
+    loadDropdowns();
+    loadAttendance();
+  </script>
+</body>
+</html>

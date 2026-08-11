@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placements — BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Placements</h1>
+          <p class="page-subtitle">Manage internship placements and assignments</p>
+        </div>
+        <div class="page-header-actions">
+          <button class="btn btn-primary" onclick="openAddModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Placement
+          </button>
+        </div>
+      </div>
+
+      <div id="pageAlert"></div>
+
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search placements...">
+        <select id="statusFilter">
+          <option value="">All Status</option>
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+          <option value="full">Full</option>
+        </select>
+        <select id="departmentFilter">
+          <option value="">All Departments</option>
+        </select>
+        <button class="btn btn-outline" onclick="loadPlacements()">Search</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>All Placements</h2>
+          <div class="card-header-actions">
+            <span class="text-sm text-muted" id="placementCount"></span>
+          </div>
+        </div>
+        <div class="card-body-compact">
+          <div class="table-wrapper">
+            <table id="placementsTable">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Department</th>
+                  <th>Max Interns</th>
+                  <th>Assigned</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="placementsBody">
+                <tr><td colspan="8" class="empty-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add/Edit Placement Modal -->
+  <div class="modal-overlay" id="placementModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="placementModalTitle">Add Placement</h3>
+        <button class="modal-close" onclick="closeModal('placementModal')">&times;</button>
+      </div>
+      <form id="placementForm">
+        <div class="modal-body">
+          <div id="formAlert"></div>
+          <input type="hidden" id="placementId">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Title <span class="required">*</span></label>
+              <input type="text" id="pl_title" required maxlength="200" placeholder="e.g. Software Engineering Intern">
+            </div>
+            <div class="form-group">
+              <label>Department <span class="required">*</span></label>
+              <select id="pl_department_id" required>
+                <option value="">Select Department</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="pl_description" rows="3" placeholder="Describe the placement role..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Requirements</label>
+            <textarea id="pl_requirements" rows="3" placeholder="List any requirements..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Max Interns <span class="required">*</span></label>
+              <input type="number" id="pl_max_interns" required min="1" max="100" placeholder="e.g. 5">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="pl_status">
+                <option value="open">Open</option>
+                <option value="closed">Closed</option>
+                <option value="full">Full</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Start Date <span class="required">*</span></label>
+              <input type="date" id="pl_start_date" required>
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="date" id="pl_end_date">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('placementModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="placementSaveBtn">Save Placement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Assigned Interns Modal -->
+  <div class="modal-overlay" id="viewInternsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="viewInternsTitle">Assigned Interns</h3>
+        <button class="modal-close" onclick="closeModal('viewInternsModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="viewInternsAlert"></div>
+        <div id="viewInternsList"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('viewInternsModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign Interns Modal -->
+  <div class="modal-overlay" id="assignModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="assignModalTitle">Assign Interns</h3>
+        <button class="modal-close" onclick="closeModal('assignModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="assignAlert"></div>
+        <div class="form-group">
+          <label>Search Interns</label>
+          <input type="text" id="assignSearchInput" placeholder="Filter by name or email...">
+        </div>
+        <div id="assignInternsList" class="card-body-compact" style="max-height:400px;overflow-y:auto;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('assignModal')">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmAssignBtn" onclick="confirmAssign()">Assign Selected</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    requireAuth('admin');
+    document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'placements');
+
+    let editingId = null;
+    let departments = [];
+    let allInterns = [];
+    let currentPlacementId = null;
+
+    async function loadDepartments() {
+      try {
+        departments = await apiRequest('/departments');
+        const options = departments.map(d =>
+          '<option value="' + d.id + '">' + escapeHtml(d.name) + '</option>'
+        ).join('');
+        document.getElementById('departmentFilter').innerHTML = '<option value="">All Departments</option>' + options;
+        document.getElementById('pl_department_id').innerHTML = '<option value="">Select Department</option>' + options;
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    function getDeptName(id) {
+      const d = departments.find(x => x.id == id || x.id === id);
+      return d ? d.name : '\u2014';
+    }
+
+    async function loadPlacements() {
+      const search = document.getElementById('searchInput').value;
+      const status = document.getElementById('statusFilter').value;
+      const departmentId = document.getElementById('departmentFilter').value;
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+      if (departmentId) params.set('department_id', departmentId);
+
+      try {
+        const placements = await apiRequest('/placements?' + params);
+        const tbody = document.getElementById('placementsBody');
+        document.getElementById('placementCount').textContent = placements.length + ' placement' + (placements.length !== 1 ? 's' : '');
+
+        if (placements.length === 0) {
+          tbody.innerHTML = renderEmptyState('No placements found');
+          return;
+        }
+        tbody.innerHTML = placements.map(p => {
+          const statusClass = p.status === 'open' ? 'success' : p.status === 'full' ? 'warning' : 'inactive';
+          return `
+            <tr>
+              <td class="font-bold">${escapeHtml(p.title)}</td>
+              <td>${escapeHtml(p.department_name || getDeptName(p.department_id))}</td>
+              <td class="font-mono text-sm">${p.max_interns}</td>
+              <td class="font-mono text-sm">${p.assigned_count || 0}</td>
+              <td class="font-mono text-sm">${formatDate(p.start_date)}</td>
+              <td class="font-mono text-sm">${formatDate(p.end_date)}</td>
+              <td><span class="badge badge-${statusClass}">${escapeHtml(p.status)}</span></td>
+              <td>
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-ghost" data-edit="${p.id}" aria-label="Edit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button class="btn btn-sm btn-ghost" data-delete="${p.id}" data-name="${escapeHtml(p.title)}" aria-label="Delete" style="color:var(--color-danger);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                  <button class="btn btn-sm btn-ghost" data-view="${p.id}" data-title="${escapeHtml(p.title)}" aria-label="View Interns">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  </button>
+                  <button class="btn btn-sm btn-ghost" data-assign="${p.id}" data-title="${escapeHtml(p.title)}" aria-label="Assign Interns" style="color:var(--color-primary);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    document.getElementById('placementsBody').addEventListener('click', (e) => {
+      const editBtn = e.target.closest('[data-edit]');
+      if (editBtn) return editPlacement(editBtn.dataset.edit);
+      const deleteBtn = e.target.closest('[data-delete]');
+      if (deleteBtn) return deletePlacement(deleteBtn.dataset.delete, deleteBtn.dataset.name);
+      const viewBtn = e.target.closest('[data-view]');
+      if (viewBtn) return viewAssignedInterns(viewBtn.dataset.view, viewBtn.dataset.title);
+      const assignBtn = e.target.closest('[data-assign]');
+      if (assignBtn) return openAssignModal(assignBtn.dataset.assign, assignBtn.dataset.title);
+    });
+
+    function openAddModal() {
+      editingId = null;
+      document.getElementById('placementModalTitle').textContent = 'Add Placement';
+      document.getElementById('placementForm').reset();
+      document.getElementById('placementId').value = '';
+      document.getElementById('pl_status').value = 'open';
+      document.getElementById('placementSaveBtn').textContent = 'Save Placement';
+      openModal('placementModal');
+    }
+
+    async function editPlacement(id) {
+      try {
+        const placement = await apiRequest('/placements/' + id);
+        editingId = id;
+        document.getElementById('placementModalTitle').textContent = 'Edit Placement';
+        document.getElementById('placementId').value = id;
+        document.getElementById('pl_title').value = placement.title;
+        document.getElementById('pl_department_id').value = placement.department_id;
+        document.getElementById('pl_description').value = placement.description || '';
+        document.getElementById('pl_requirements').value = placement.requirements || '';
+        document.getElementById('pl_max_interns').value = placement.max_interns;
+        document.getElementById('pl_start_date').value = placement.start_date;
+        document.getElementById('pl_end_date').value = placement.end_date || '';
+        document.getElementById('pl_status').value = placement.status;
+        document.getElementById('placementSaveBtn').textContent = 'Update Placement';
+        openModal('placementModal');
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    async function deletePlacement(id, title) {
+      confirmDialog(
+        'Delete Placement',
+        'Delete "' + title + '"? This action cannot be undone.',
+        async () => {
+          try {
+            await apiRequest('/placements/' + id, { method: 'DELETE' });
+            loadPlacements();
+          } catch (err) {
+            showAlert(document.getElementById('pageAlert'), err.message);
+          }
+        },
+        'Delete',
+        true
+      );
+    }
+
+    async function viewAssignedInterns(id, title) {
+      currentPlacementId = id;
+      document.getElementById('viewInternsTitle').textContent = 'Assigned Interns — ' + title;
+      document.getElementById('viewInternsList').innerHTML = '<div class="spinner"></div>';
+      openModal('viewInternsModal');
+
+      try {
+        const interns = await apiRequest('/placements/' + id + '/interns');
+        if (interns.length === 0) {
+          document.getElementById('viewInternsList').innerHTML = '<div class="empty-state"><div class="empty-state-icon">' + Icons.users + '</div><h3>No interns assigned yet</h3></div>';
+          return;
+        }
+        document.getElementById('viewInternsList').innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>University</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${interns.map(i => `
+                <tr>
+                  <td class="font-bold">${escapeHtml(i.full_name)}</td>
+                  <td>${escapeHtml(i.email)}</td>
+                  <td>${escapeHtml(i.university) || '\u2014'}</td>
+                  <td>
+                    <button class="btn btn-sm btn-ghost" data-unassign="${i.id}" data-name="${escapeHtml(i.full_name)}" style="color:var(--color-danger);">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      Unassign
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        showAlert(document.getElementById('viewInternsAlert'), err.message);
+      }
+    }
+
+    document.getElementById('viewInternsList').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-unassign]');
+      if (!btn) return;
+      confirmDialog(
+        'Unassign Intern',
+        'Remove "' + btn.dataset.name + '" from this placement?',
+        async () => {
+          try {
+            await apiRequest('/placements/' + currentPlacementId + '/unassign', {
+              method: 'POST',
+              body: JSON.stringify({ intern_id: btn.dataset.unassign })
+            });
+            viewAssignedInterns(currentPlacementId, document.getElementById('viewInternsTitle').textContent.replace('Assigned Interns \u2014 ', ''));
+            loadPlacements();
+          } catch (err) {
+            showAlert(document.getElementById('viewInternsAlert'), err.message);
+          }
+        },
+        'Unassign',
+        true
+      );
+    });
+
+    async function openAssignModal(id, title) {
+      currentPlacementId = id;
+      document.getElementById('assignModalTitle').textContent = 'Assign Interns — ' + title;
+      document.getElementById('assignSearchInput').value = '';
+      document.getElementById('assignInternsList').innerHTML = '<div class="spinner"></div>';
+      document.getElementById('confirmAssignBtn').disabled = true;
+      openModal('assignModal');
+
+      try {
+        allInterns = await apiRequest('/interns?status=active');
+        renderAssignList();
+      } catch (err) {
+        showAlert(document.getElementById('assignAlert'), err.message);
+      }
+    }
+
+    function renderAssignList() {
+      const search = document.getElementById('assignSearchInput').value.toLowerCase();
+      const filtered = allInterns.filter(i =>
+        i.full_name.toLowerCase().includes(search) || (i.email && i.email.toLowerCase().includes(search))
+      );
+
+      if (filtered.length === 0) {
+        document.getElementById('assignInternsList').innerHTML = '<div class="empty-state"><h3>No available interns found</h3></div>';
+        return;
+      }
+
+      document.getElementById('assignInternsList').innerHTML = `
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40px"></th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>University</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(i => `
+                <tr>
+                  <td><input type="checkbox" class="assign-check" value="${i.id}"></td>
+                  <td class="font-bold">${escapeHtml(i.full_name)}</td>
+                  <td>${escapeHtml(i.email)}</td>
+                  <td>${escapeHtml(i.university) || '\u2014'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    document.getElementById('assignSearchInput').addEventListener('input', renderAssignList);
+
+    document.getElementById('assignInternsList').addEventListener('change', () => {
+      const checked = document.querySelectorAll('.assign-check:checked').length;
+      document.getElementById('confirmAssignBtn').disabled = checked === 0;
+    });
+
+    async function confirmAssign() {
+      const checks = document.querySelectorAll('.assign-check:checked');
+      const internIds = Array.from(checks).map(c => c.value);
+
+      if (internIds.length === 0) return;
+
+      try {
+        await apiRequest('/placements/' + currentPlacementId + '/assign', {
+          method: 'POST',
+          body: JSON.stringify({ intern_ids: internIds })
+        });
+        closeModal('assignModal');
+        loadPlacements();
+        showToast(internIds.length + ' intern' + (internIds.length !== 1 ? 's' : '') + ' assigned successfully', 'success');
+      } catch (err) {
+        showAlert(document.getElementById('assignAlert'), err.message);
+      }
+    }
+
+    document.getElementById('placementForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertEl = document.getElementById('formAlert');
+      const payload = {
+        title: document.getElementById('pl_title').value,
+        department_id: document.getElementById('pl_department_id').value,
+        description: document.getElementById('pl_description').value,
+        requirements: document.getElementById('pl_requirements').value,
+        max_interns: parseInt(document.getElementById('pl_max_interns').value, 10),
+        start_date: document.getElementById('pl_start_date').value,
+        end_date: document.getElementById('pl_end_date').value || null,
+        status: document.getElementById('pl_status').value
+      };
+
+      try {
+        if (editingId) {
+          await apiRequest('/placements/' + editingId, {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+          });
+        } else {
+          await apiRequest('/placements', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+        }
+        closeModal('placementModal');
+        loadPlacements();
+      } catch (err) {
+        showAlert(alertEl, err.message);
+      }
+    });
+
+    document.getElementById('searchInput').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') loadPlacements();
+    });
+
+    loadDepartments().then(() => loadPlacements());
+  </script>
+</body>
+</html>
