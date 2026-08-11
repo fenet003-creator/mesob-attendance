@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intern Dashboard - BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1>My Dashboard</h1>
+        <div class="user-info">
+          <span id="welcomeUser"></span>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card success"><div class="label">Present</div><div class="value" id="statPresent"><div class="spinner"></div></div></div>
+        <div class="stat-card warning"><div class="label">Late</div><div class="value" id="statLate"><div class="spinner"></div></div></div>
+        <div class="stat-card danger"><div class="label">Absent</div><div class="value" id="statAbsent"><div class="spinner"></div></div></div>
+        <div class="stat-card"><div class="label">Attendance %</div><div class="value" id="statPercent"><div class="spinner"></div></div></div>
+      </div>
+
+      <div id="dashAlert"></div>
+
+      <div class="card checkin-panel">
+        <h2>Today's Attendance</h2>
+        <div class="checkin-time" id="clock">--:--:--</div>
+        <div id="alert"></div>
+        <div class="checkin-status" id="todayStatus"></div>
+        <div class="btn-group" style="justify-content: center;">
+          <button class="btn btn-success" id="checkInBtn" onclick="checkIn()">Check In</button>
+          <button class="btn btn-danger" id="checkOutBtn" onclick="checkOut()">Check Out</button>
+        </div>
+        <p style="margin-top: 1.5rem; color: var(--gray-500); font-size: 0.85rem;">
+          Present: before 8:15 AM &nbsp;|&nbsp; Late: 8:15–8:30 AM
+        </p>
+      </div>
+    </main>
+  </div>
+  <script src="/js/api.js"></script>
+  <script>
+    const user = requireAuth('intern');
+    if (user) {
+      document.getElementById('welcomeUser').textContent = 'Welcome, ' + escapeHtml(user.fullName || user.username);
+      document.getElementById('sidebar').innerHTML = renderSidebar('intern', 'dashboard');
+    }
+    updateClock('clock');
+
+    async function loadStats() {
+      try {
+        const stats = await apiRequest('/attendance/stats');
+        document.getElementById('statPresent').textContent = stats.present;
+        document.getElementById('statLate').textContent = stats.late;
+        document.getElementById('statAbsent').textContent = stats.absent;
+        document.getElementById('statPercent').textContent = stats.attendance_percentage + '%';
+      } catch (err) {
+        showAlert(document.getElementById('dashAlert'), err.message);
+      }
+    }
+
+    async function loadTodayStatus() {
+      try {
+        const records = await apiRequest('/attendance/today');
+        const statusEl = document.getElementById('todayStatus');
+        const checkInBtn = document.getElementById('checkInBtn');
+        const checkOutBtn = document.getElementById('checkOutBtn');
+
+        if (records.length === 0) {
+          statusEl.innerHTML = '<p style="color: var(--gray-500);">Not checked in yet</p>';
+          checkInBtn.disabled = false;
+          checkOutBtn.disabled = true;
+          return;
+        }
+
+        const r = records[0];
+        statusEl.innerHTML = `
+          <p>Check In: <strong>${formatTime(r.check_in)}</strong></p>
+          <p>Check Out: <strong>${formatTime(r.check_out)}</strong></p>
+          <p>Status: ${statusBadge(r.attendance_status)}</p>
+        `;
+        checkInBtn.disabled = !!r.check_in;
+        checkOutBtn.disabled = !r.check_in || !!r.check_out;
+      } catch (err) {
+        showAlert(document.getElementById('dashAlert'), err.message);
+      }
+    }
+
+    async function checkIn() {
+      const alert = document.getElementById('alert');
+      try {
+        const result = await apiRequest('/attendance/check-in', { method: 'POST' });
+        showAlert(alert, 'Checked in — Status: ' + escapeHtml(result.status), 'success');
+        loadTodayStatus();
+        loadStats();
+      } catch (err) {
+        showAlert(alert, err.message);
+      }
+    }
+
+    async function checkOut() {
+      const alert = document.getElementById('alert');
+      try {
+        await apiRequest('/attendance/check-out', { method: 'POST' });
+        showAlert(alert, 'Checked out successfully', 'success');
+        loadTodayStatus();
+      } catch (err) {
+        showAlert(alert, err.message);
+      }
+    }
+
+    loadStats();
+    loadTodayStatus();
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+node_modules/
+.env
+public/uploads/*
+!public/uploads/.gitkeep
+data/*.db
+data/*.db-journal
+*.log
+.DS_Store
+Thumbs.db

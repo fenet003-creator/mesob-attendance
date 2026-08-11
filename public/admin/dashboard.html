@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <div class="user-info">
+          <span id="welcomeUser"></span>
+        </div>
+      </div>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="label">Total Interns</div><div class="value" id="totalInterns"><div class="spinner"></div></div></div>
+        <div class="stat-card success"><div class="label">Present Today</div><div class="value" id="presentToday"><div class="spinner"></div></div></div>
+        <div class="stat-card warning"><div class="label">Late Today</div><div class="value" id="lateToday"><div class="spinner"></div></div></div>
+        <div class="stat-card danger"><div class="label">Absent Today</div><div class="value" id="absentToday"><div class="spinner"></div></div></div>
+      </div>
+
+      <div id="dashboardAlert"></div>
+
+      <div class="card">
+        <h2>Today's Attendance</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceTable">
+              <tr><td colspan="5" class="empty-state"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Recent Activity</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Action</th>
+                <th>Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recentTable">
+              <tr><td colspan="4" class="empty-state"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="/js/api.js"></script>
+  <script>
+    const user = requireAuth('admin');
+    if (user) {
+      document.getElementById('welcomeUser').textContent = 'Welcome, ' + escapeHtml(user.fullName || user.username);
+      document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'dashboard');
+    }
+
+    async function loadDashboard() {
+      try {
+        const summary = await apiRequest('/dashboard/summary');
+        document.getElementById('totalInterns').textContent = summary.total_interns;
+        document.getElementById('presentToday').textContent = summary.present_today;
+        document.getElementById('lateToday').textContent = summary.late_today;
+        document.getElementById('absentToday').textContent = summary.absent_today;
+
+        const today = await apiRequest('/attendance/today');
+        const tbody = document.getElementById('attendanceTable');
+        if (today.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No attendance recorded today</td></tr>';
+        } else {
+          tbody.innerHTML = today.map(r => `
+            <tr>
+              <td>${escapeHtml(r.full_name)}</td>
+              <td>${escapeHtml(r.department) || '-'}</td>
+              <td>${formatTime(r.check_in)}</td>
+              <td>${formatTime(r.check_out)}</td>
+              <td>${statusBadge(r.attendance_status)}</td>
+            </tr>
+          `).join('');
+        }
+
+        const recent = summary.recent_activities || [];
+        const recentBody = document.getElementById('recentTable');
+        if (recent.length === 0) {
+          recentBody.innerHTML = '<tr><td colspan="4" class="empty-state">No recent activity</td></tr>';
+        } else {
+          recentBody.innerHTML = recent.map(r => {
+            const action = r.check_out ? 'Checked Out' : r.check_in ? 'Checked In' : 'Updated';
+            const time = r.check_out || r.check_in || '-';
+            return `
+              <tr>
+                <td>${escapeHtml(r.full_name)}</td>
+                <td>${escapeHtml(action)}</td>
+                <td>${formatTime(time)}</td>
+                <td>${statusBadge(r.attendance_status)}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        showAlert(document.getElementById('dashboardAlert'), err.message);
+      }
+    }
+
+    loadDashboard();
+    setInterval(loadDashboard, 60000);
+  </script>
+</body>
+</html>

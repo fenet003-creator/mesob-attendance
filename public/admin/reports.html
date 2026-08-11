@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports - BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Attendance Reports</h1>
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="exportExcel()">Export Excel</button>
+        </div>
+      </div>
+
+      <div id="pageAlert"></div>
+
+      <div class="search-bar">
+        <select id="reportType">
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="custom">Custom Range</option>
+        </select>
+        <input type="date" id="startDate" class="hidden">
+        <input type="date" id="endDate" class="hidden">
+        <select id="internFilter">
+          <option value="">All Interns</option>
+        </select>
+        <select id="statusFilter">
+          <option value="">All Status</option>
+          <option value="present">Present</option>
+          <option value="late">Late</option>
+          <option value="absent">Absent</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadReport()">Generate</button>
+      </div>
+
+      <div class="card">
+        <h2>Attendance Summary</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Department</th>
+                <th>University</th>
+                <th>Total Days</th>
+                <th>Present</th>
+                <th>Late</th>
+                <th>Absent</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTable">
+              <tr><td colspan="7" class="empty-state">Generate a report to view summary</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Detailed Records</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="reportTable">
+              <tr><td colspan="6" class="empty-state">Generate a report to view records</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="/js/api.js"></script>
+  <script>
+    requireAuth('admin');
+    document.getElementById('sidebar').innerHTML = renderSidebar('admin', 'reports');
+
+    document.getElementById('reportType').addEventListener('change', (e) => {
+      const custom = e.target.value === 'custom';
+      document.getElementById('startDate').classList.toggle('hidden', !custom);
+      document.getElementById('endDate').classList.toggle('hidden', !custom);
+    });
+
+    async function loadInternsList() {
+      try {
+        const interns = await apiRequest('/interns');
+        const select = document.getElementById('internFilter');
+        interns.forEach(i => {
+          const opt = document.createElement('option');
+          opt.value = i.id;
+          opt.textContent = i.full_name;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    function getReportParams() {
+      const type = document.getElementById('reportType').value;
+      const params = new URLSearchParams();
+      if (type !== 'custom') params.set('type', type);
+      if (type === 'custom') {
+        params.set('start_date', document.getElementById('startDate').value);
+        params.set('end_date', document.getElementById('endDate').value);
+      }
+      const internId = document.getElementById('internFilter').value;
+      if (internId) params.set('intern_id', internId);
+      return params;
+    }
+
+    async function loadReport() {
+      const params = getReportParams();
+      const status = document.getElementById('statusFilter').value;
+
+      try {
+        const [records, summary] = await Promise.all([
+          apiRequest('/reports?' + params),
+          apiRequest('/reports/summary?' + params),
+        ]);
+
+        const filtered = status
+          ? records.filter(r => r.attendance_status === status)
+          : records;
+
+        const reportBody = document.getElementById('reportTable');
+        if (filtered.length === 0) {
+          reportBody.innerHTML = '<tr><td colspan="6" class="empty-state">No records found</td></tr>';
+        } else {
+          reportBody.innerHTML = filtered.map(r => `
+            <tr>
+              <td>${formatDate(r.attendance_date)}</td>
+              <td>${escapeHtml(r.full_name)}</td>
+              <td>${escapeHtml(r.department) || '-'}</td>
+              <td>${formatTime(r.check_in)}</td>
+              <td>${formatTime(r.check_out)}</td>
+              <td>${statusBadge(r.attendance_status)}</td>
+            </tr>
+          `).join('');
+        }
+
+        const summaryBody = document.getElementById('summaryTable');
+        if (summary.length === 0) {
+          summaryBody.innerHTML = '<tr><td colspan="7" class="empty-state">No summary data</td></tr>';
+        } else {
+          summaryBody.innerHTML = summary.map(s => `
+            <tr>
+              <td>${escapeHtml(s.full_name)}</td>
+              <td>${escapeHtml(s.department) || '-'}</td>
+              <td>${escapeHtml(s.university) || '-'}</td>
+              <td>${s.total_days || 0}</td>
+              <td>${s.present || 0}</td>
+              <td>${s.late || 0}</td>
+              <td>${s.absent || 0}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), err.message);
+      }
+    }
+
+    async function exportExcel() {
+      const params = getReportParams();
+      try {
+        const response = await apiRequest('/reports/export/excel?' + params, { raw: true });
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'attendance-report.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        showAlert(document.getElementById('pageAlert'), 'Export failed: ' + err.message);
+      }
+    }
+
+    loadInternsList();
+    loadReport();
+  </script>
+</body>
+</html>
