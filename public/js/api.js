@@ -1,6 +1,4 @@
-const API_BASE = window.location.hostname === 'localhost'
-  ? '/api'
-  : 'https://bg-mesob-attendance-api.onrender.com/api';
+const API_BASE = '/api';
 
 function escapeHtml(str) {
   if (!str) return '';
