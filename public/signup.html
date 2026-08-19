@@ -288,15 +288,9 @@
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="department">Department</label>
-              <input type="text" id="department" name="department" placeholder="e.g. Software Engineering" maxlength="150">
-            </div>
-            <div class="form-group">
-              <label for="field_of_study">Field of Study</label>
-              <input type="text" id="field_of_study" name="field_of_study" placeholder="e.g. Computer Science" maxlength="150">
-            </div>
+          <div class="form-group">
+            <label for="department">Department</label>
+            <input type="text" id="department" name="department" placeholder="e.g. Software Engineering" maxlength="150">
           </div>
 
           <div class="form-group">
@@ -322,11 +316,6 @@
 
   <script src="/js/api.js"></script>
   <script>
-    const user = getUser();
-    if (user && getToken()) {
-      window.location.href = user.role === 'admin' ? '/admin/dashboard.html' : user.role === 'supervisor' ? '/supervisor/dashboard.html' : '/intern/dashboard.html';
-    }
-
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('signupBtn');
@@ -344,7 +333,6 @@
         phone: document.getElementById('phone').value || undefined,
         university: document.getElementById('university').value || undefined,
         department: document.getElementById('department').value || undefined,
-        field_of_study: document.getElementById('field_of_study').value || undefined,
         cover_letter: document.getElementById('cover_letter').value || undefined,
       };
 
