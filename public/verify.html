@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email — BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .verify-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--surface-warm, #f5f0ea); padding: 2rem; }
+    .verify-card { background: #fff; border-radius: 1rem; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 2.5rem; width: 100%; max-width: 440px; text-align: center; }
+    .verify-icon { width: 64px; height: 64px; margin: 0 auto 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .verify-icon.success { background: #d8f3dc; color: #2d6a4f; }
+    .verify-icon.error { background: #fde2e4; color: #9b2226; }
+    .verify-icon.loading { background: #fdf8ed; color: #b8860b; }
+    .verify-icon svg { width: 32px; height: 32px; }
+    .verify-card h1 { font-size: 1.25rem; color: var(--ink, #1a1a2e); margin-bottom: 0.5rem; }
+    .verify-card p { font-size: 0.9rem; color: var(--ink-muted, #7a7a8e); line-height: 1.6; margin-bottom: 1.5rem; }
+    .verify-card a { color: var(--gold, #b8860b); font-weight: 600; }
+    .verify-card a:hover { text-decoration: underline; }
+    .spinner-lg { width: 40px; height: 40px; border: 3px solid #e8e4de; border-top-color: #b8860b; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="verify-page">
+    <div class="verify-card" id="verifyCard">
+      <div class="spinner-lg" id="loadingSpinner"></div>
+      <h1 id="verifyTitle">Verifying your email...</h1>
+      <p id="verifyMessage">Please wait while we confirm your email address.</p>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const card = document.getElementById('verifyCard');
+    const spinner = document.getElementById('loadingSpinner');
+    const title = document.getElementById('verifyTitle');
+    const message = document.getElementById('verifyMessage');
+
+    if (!token) {
+      spinner.style.display = 'none';
+      card.querySelector('.verify-icon, .spinner-lg')?.remove();
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'verify-icon error';
+      iconDiv.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      card.prepend(iconDiv);
+      title.textContent = 'Invalid Link';
+      message.innerHTML = 'No verification token provided. Please check your email for the correct link.';
+    } else {
+      fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`)
+        .then(r => r.json())
+        .then(data => {
+          spinner.style.display = 'none';
+          const iconDiv = document.createElement('div');
+          iconDiv.className = 'verify-icon success';
+          iconDiv.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+          card.prepend(iconDiv);
+          title.textContent = 'Email Verified!';
+          message.innerHTML = `${data.message}<br><br><a href="/login.html">Sign In →</a>`;
+        })
+        .catch(() => {
+          spinner.style.display = 'none';
+          const iconDiv = document.createElement('div');
+          iconDiv.className = 'verify-icon error';
+          iconDiv.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+          card.prepend(iconDiv);
+          title.textContent = 'Verification Failed';
+          message.innerHTML = 'Something went wrong. Please try again or request a new verification link.<br><br><a href="/login.html">Back to Sign In</a>';
+        });
+    }
+  </script>
+</body>
+</html>

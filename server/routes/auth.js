@@ -1,9 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
 const { validatePassword } = require('../utils/validate');
+const { sendVerificationEmail } = require('../utils/email');
 
 const router = express.Router();
 
@@ -37,14 +39,17 @@ router.post('/register', async (req, res) => {
       [full_name, email, phone || null, university || null, department || null, field_of_study || null, today, cover_letter || null, 'pending']
     );
 
-    // Also create a pending user account so they can log in once approved
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
+    // Create a pending user account
     const hashedPassword = await bcrypt.hash(password, 10);
     const [newUser] = await pool.query(
-      'INSERT INTO users (username, password, role) VALUES (?, ?, ?) RETURNING id',
-      [username, hashedPassword, userRole]
+      'INSERT INTO users (username, password, role, verified, verification_token) VALUES (?, ?, ?, 0, ?) RETURNING id',
+      [username, hashedPassword, userRole, verificationToken]
     );
 
-    // Create intern profile with pending status
+    // Create intern/supervisor profile with pending status
     if (userRole === 'intern') {
       await pool.query(
         'INSERT INTO interns (user_id, full_name, email, phone, university, department, start_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -57,12 +62,48 @@ router.post('/register', async (req, res) => {
       );
     }
 
+    // Send verification email
+    const baseUrl = process.env.BASE_URL || req.protocol + '://' + req.get('host');
+    try {
+      const emailResult = await sendVerificationEmail(email, verificationToken, baseUrl);
+      console.log('Verification email sent to', email, emailResult.previewUrl ? `(preview: ${emailResult.previewUrl})` : '');
+    } catch (emailErr) {
+      console.error('Failed to send verification email:', emailErr.message);
+      // Don't fail registration if email fails
+    }
+
     res.status(201).json({
-      message: 'Application submitted successfully! Your account is pending approval. You will be able to sign in once an administrator approves your application.',
+      message: 'Application submitted! Please check your email to verify your account. An administrator will also review your application.',
+      email,
     });
   } catch (err) {
     console.error('Registration error:', err);
     res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+router.get('/verify', async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).json({ error: 'Verification token is required' });
+    }
+
+    const [users] = await pool.query('SELECT id, verified FROM users WHERE verification_token = ?', [token]);
+    if (users.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired verification token' });
+    }
+
+    const user = users[0];
+    if (user.verified === 1) {
+      return res.json({ message: 'Email already verified' });
+    }
+
+    await pool.query('UPDATE users SET verified = 1, verification_token = NULL WHERE id = ?', [user.id]);
+    res.json({ message: 'Email verified successfully! You can now sign in.' });
+  } catch (err) {
+    console.error('Verify error:', err);
+    res.status(500).json({ error: 'Verification failed' });
   }
 });
 
@@ -88,6 +129,11 @@ router.post('/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check email verification
+    if (user.verified === 0 && user.verification_token) {
+      return res.status(403).json({ error: 'Please verify your email before signing in. Check your inbox for the verification link.' });
     }
 
     let internId = null;

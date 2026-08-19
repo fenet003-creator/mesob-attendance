@@ -166,12 +166,12 @@
           body: JSON.stringify(body),
         });
         alertEl.className = 'alert alert-success';
-        alertEl.textContent = data.message || 'Application submitted! You can now sign in.';
+        alertEl.textContent = data.message || 'Application submitted! Please check your email to verify your account.';
         alertEl.style.display = 'block';
         document.getElementById('signupForm').reset();
         document.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
         document.querySelector('.role-option[data-role="intern"]').classList.add('active');
-        setTimeout(() => { window.location.href = '/login.html'; }, 2000);
+        setTimeout(() => { window.location.href = '/login.html'; }, 4000);
       } catch (err) {
         alertEl.className = 'alert alert-error';
         alertEl.textContent = err.message;

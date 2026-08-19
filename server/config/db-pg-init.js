@@ -7,6 +7,8 @@ async function initPgSchema(pool) {
       username TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'intern',
+      verified INTEGER DEFAULT 0,
+      verification_token TEXT,
       created_at TEXT DEFAULT (NOW() AT TIME ZONE 'utc')
     );
 
@@ -152,6 +154,12 @@ async function initPgSchema(pool) {
       created_at TEXT DEFAULT (NOW() AT TIME ZONE 'utc')
     );
   `);
+
+  // Migration: add verification columns if missing
+  try {
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS verified INTEGER DEFAULT 0");
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT");
+  } catch (e) { /* columns already exist */ }
 
   // Default settings
   const [settingCheck] = await pool.query("SELECT COUNT(*) as cnt FROM settings");
