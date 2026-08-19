@@ -17,8 +17,8 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Full name, email, username, and password are required' });
     }
 
-    const allowedRoles = ['intern', 'supervisor'];
-    const userRole = allowedRoles.includes(role) ? role : 'intern';
+    const allowedRoles = ['intern'];
+    const userRole = 'intern';
 
     // Check if email already used
     const [existingEmail] = await pool.query('SELECT id FROM applications WHERE email = ? LIMIT 1', [email]);
@@ -49,18 +49,11 @@ router.post('/register', async (req, res) => {
       [username, hashedPassword, userRole, verificationToken]
     );
 
-    // Create intern/supervisor profile with pending status
-    if (userRole === 'intern') {
-      await pool.query(
-        'INSERT INTO interns (user_id, full_name, email, phone, university, department, start_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [newUser.insertId, full_name, email, phone || null, university || null, department || null, today, 'pending']
-      );
-    } else if (userRole === 'supervisor') {
-      await pool.query(
-        'INSERT INTO supervisors (user_id, full_name, email, phone, department, status) VALUES (?, ?, ?, ?, ?, ?)',
-        [newUser.insertId, full_name, email, phone || null, department || null, 'pending']
-      );
-    }
+    // Create intern profile with pending status
+    await pool.query(
+      'INSERT INTO interns (user_id, full_name, email, phone, university, department, start_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [newUser.insertId, full_name, email, phone || null, university || null, department || null, today, 'pending']
+    );
 
     // Send verification email
     const baseUrl = process.env.BASE_URL || req.protocol + '://' + req.get('host');

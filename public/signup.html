@@ -27,14 +27,6 @@
     .alert { padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.8rem; display: none; }
     .alert-error { background: #fde2e4; color: #9b2226; border: 1px solid #f5c6cb; display: block; }
     .alert-success { background: #d8f3dc; color: #2d6a4f; border: 1px solid #b7e4c7; display: block; }
-    .role-selector { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; }
-    .role-option { flex: 1; padding: 0.75rem; border: 1.5px solid var(--border, #e8e4de); border-radius: 0.5rem; text-align: center; cursor: pointer; transition: all 0.2s; }
-    .role-option:hover { border-color: var(--gold, #b8860b); }
-    .role-option.active { border-color: var(--gold, #b8860b); background: var(--gold-bg, #fdf8ed); }
-    .role-option input { display: none; }
-    .role-option .role-label { font-size: 0.8rem; font-weight: 600; color: var(--ink, #1a1a2e); }
-    .role-option .role-desc { font-size: 0.7rem; color: var(--ink-muted, #7a7a8e); margin-top: 0.25rem; }
-    .password-hint { font-size: 0.7rem; color: var(--ink-muted, #7a7a8e); margin-top: 0.25rem; }
   </style>
 </head>
 <body>
@@ -48,19 +40,6 @@
       <div id="alert"></div>
 
       <form id="signupForm">
-        <div class="role-selector">
-          <label class="role-option active" data-role="intern">
-            <input type="radio" name="role" value="intern" checked>
-            <div class="role-label">Intern</div>
-            <div class="role-desc">Apply for an internship</div>
-          </label>
-          <label class="role-option" data-role="supervisor">
-            <input type="radio" name="role" value="supervisor">
-            <div class="role-label">Supervisor</div>
-            <div class="role-desc">Register as a supervisor</div>
-          </label>
-        </div>
-
         <div class="form-row">
           <div class="form-group">
             <label for="full_name">Full Name *</label>
@@ -128,15 +107,6 @@
       window.location.href = user.role === 'admin' ? '/admin/dashboard.html' : user.role === 'supervisor' ? '/supervisor/dashboard.html' : '/intern/dashboard.html';
     }
 
-    // Role selector
-    document.querySelectorAll('.role-option').forEach(opt => {
-      opt.addEventListener('click', () => {
-        document.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
-        opt.classList.add('active');
-        opt.querySelector('input').checked = true;
-      });
-    });
-
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('signupBtn');
@@ -146,7 +116,6 @@
       alertEl.className = 'alert';
       alertEl.style.display = 'none';
 
-      const role = document.querySelector('input[name="role"]:checked').value;
       const body = {
         full_name: document.getElementById('full_name').value,
         email: document.getElementById('email').value,
@@ -157,7 +126,6 @@
         department: document.getElementById('department').value || undefined,
         field_of_study: document.getElementById('field_of_study').value || undefined,
         cover_letter: document.getElementById('cover_letter').value || undefined,
-        role: role,
       };
 
       try {
@@ -169,8 +137,6 @@
         alertEl.textContent = data.message || 'Application submitted! Please check your email to verify your account.';
         alertEl.style.display = 'block';
         document.getElementById('signupForm').reset();
-        document.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
-        document.querySelector('.role-option[data-role="intern"]').classList.add('active');
         setTimeout(() => { window.location.href = '/login.html'; }, 4000);
       } catch (err) {
         alertEl.className = 'alert alert-error';
