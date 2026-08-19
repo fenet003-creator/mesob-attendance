@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign In — BG Mesob</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .login-footer { margin-top: 1.5rem; text-align: center; }
+    .login-footer a { color: var(--gold, #b8860b); font-weight: 600; }
+    .login-footer a:hover { text-decoration: underline; }
+    .login-footer p { font-size: 0.8rem; color: var(--ink-muted, #7a7a8e); margin-top: 0.5rem; }
+  </style>
 </head>
 <body>
   <div class="login-page">
@@ -29,16 +35,23 @@
         <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Sign In</button>
       </form>
       <div class="login-footer">
-        <span>&copy; 2026 BG Mesob. All rights reserved.</span>
+        <p>Don't have an account? <a href="/signup.html">Apply for Internship</a></p>
+        <p>&copy; 2026 BG Mesob. All rights reserved.</p>
       </div>
     </div>
   </div>
   <script src="/js/api.js"></script>
   <script src="/js/components.js"></script>
   <script>
+    function getDashboardPath(role) {
+      if (role === 'admin') return '/admin/dashboard.html';
+      if (role === 'supervisor') return '/supervisor/dashboard.html';
+      return '/intern/dashboard.html';
+    }
+
     const user = getUser();
     if (user && getToken()) {
-      window.location.href = user.role === 'admin' ? '/admin/dashboard.html' : '/intern/dashboard.html';
+      window.location.href = getDashboardPath(user.role);
     }
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -47,6 +60,7 @@
       const alertEl = document.getElementById('alert');
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner spinner-sm"></span> Signing in\u2026';
+      alertEl.style.display = 'none';
 
       try {
         const data = await apiRequest('/auth/login', {
@@ -57,9 +71,7 @@
           }),
         });
         setAuth(data.token, data.user);
-        window.location.href = data.user.role === 'admin'
-          ? '/admin/dashboard.html'
-          : '/intern/dashboard.html';
+        window.location.href = getDashboardPath(data.user.role);
       } catch (err) {
         showAlert(alertEl, err.message);
         btn.disabled = false;

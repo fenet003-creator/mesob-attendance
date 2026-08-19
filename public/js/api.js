@@ -67,7 +67,9 @@ function requireAuth(requiredRole) {
     return null;
   }
   if (requiredRole && user.role !== requiredRole) {
-    window.location.href = user.role === 'admin' ? '/admin/dashboard.html' : '/intern/dashboard.html';
+    if (user.role === 'admin') window.location.href = '/admin/dashboard.html';
+    else if (user.role === 'supervisor') window.location.href = '/supervisor/dashboard.html';
+    else window.location.href = '/intern/dashboard.html';
     return null;
   }
   return user;

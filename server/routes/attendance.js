@@ -121,6 +121,34 @@ router.get('/today', authenticate, async (req, res) => {
   }
 });
 
+router.get('/date/:date', authenticate, async (req, res) => {
+  try {
+    const { date } = req.params;
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ error: 'Invalid date format (YYYY-MM-DD)' });
+    }
+    let query = `
+      SELECT a.*, i.full_name, i.department, i.university
+      FROM attendance a
+      JOIN interns i ON a.intern_id = i.id
+      WHERE a.attendance_date = ?
+    `;
+    const params = [date];
+
+    if (req.user.role === 'intern') {
+      query += ' AND a.intern_id = ?';
+      params.push(req.user.internId);
+    }
+
+    query += ' ORDER BY a.check_in ASC';
+    const [records] = await pool.query(query, params);
+    res.json(records);
+  } catch (err) {
+    console.error('Date attendance error:', err);
+    res.status(500).json({ error: 'Failed to fetch attendance' });
+  }
+});
+
 router.get('/history', authenticate, async (req, res) => {
   try {
     const { period, intern_id, start_date, end_date, status } = req.query;

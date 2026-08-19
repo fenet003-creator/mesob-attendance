@@ -7,6 +7,65 @@ const { validatePassword } = require('../utils/validate');
 
 const router = express.Router();
 
+router.post('/register', async (req, res) => {
+  try {
+    const { full_name, email, username, password, phone, university, department, field_of_study, cover_letter, role } = req.body;
+
+    if (!full_name || !email || !username || !password) {
+      return res.status(400).json({ error: 'Full name, email, username, and password are required' });
+    }
+
+    const allowedRoles = ['intern', 'supervisor'];
+    const userRole = allowedRoles.includes(role) ? role : 'intern';
+
+    // Check if email already used
+    const [existingEmail] = await pool.query('SELECT id FROM applications WHERE email = ? LIMIT 1', [email]);
+    if (existingEmail.length > 0) {
+      return res.status(409).json({ error: 'An application with this email already exists' });
+    }
+
+    // Check if username already taken
+    const [existingUser] = await pool.query('SELECT id FROM users WHERE username = ? LIMIT 1', [username]);
+    if (existingUser.length > 0) {
+      return res.status(409).json({ error: 'Username is already taken' });
+    }
+
+    // Create application record
+    const today = new Date().toISOString().slice(0, 10);
+    await pool.query(
+      'INSERT INTO applications (applicant_name, email, phone, university, department, field_of_study, start_date, cover_letter, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [full_name, email, phone || null, university || null, department || null, field_of_study || null, today, cover_letter || null, 'pending']
+    );
+
+    // Also create a pending user account so they can log in once approved
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const [newUser] = await pool.query(
+      'INSERT INTO users (username, password, role) VALUES (?, ?, ?) RETURNING id',
+      [username, hashedPassword, userRole]
+    );
+
+    // Create intern profile with pending status
+    if (userRole === 'intern') {
+      await pool.query(
+        'INSERT INTO interns (user_id, full_name, email, phone, university, department, start_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [newUser.insertId, full_name, email, phone || null, university || null, department || null, today, 'pending']
+      );
+    } else if (userRole === 'supervisor') {
+      await pool.query(
+        'INSERT INTO supervisors (user_id, full_name, email, phone, department, status) VALUES (?, ?, ?, ?, ?, ?)',
+        [newUser.insertId, full_name, email, phone || null, department || null, 'pending']
+      );
+    }
+
+    res.status(201).json({
+      message: 'Application submitted successfully! Your account is pending approval. You will be able to sign in once an administrator approves your application.',
+    });
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -42,11 +101,27 @@ router.post('/login', async (req, res) => {
       if (interns.length === 0) {
         return res.status(403).json({ error: 'Intern profile not found' });
       }
-      if (interns[0].status !== 'active') {
-        return res.status(403).json({ error: 'Your account is not active' });
+      if (interns[0].status === 'inactive' || interns[0].status === 'rejected') {
+        return res.status(403).json({ error: 'Your account has been deactivated or rejected' });
+      }
+      if (interns[0].status === 'pending') {
+        return res.status(403).json({ error: 'Your account is pending approval. Please wait for an administrator to approve your application.' });
       }
       internId = interns[0].id;
       fullName = interns[0].full_name;
+    }
+
+    if (user.role === 'supervisor') {
+      const [sups] = await pool.query(
+        'SELECT id, full_name, status FROM supervisors WHERE user_id = ?',
+        [user.id]
+      );
+      if (sups.length > 0) {
+        if (sups[0].status === 'pending') {
+          return res.status(403).json({ error: 'Your supervisor account is pending approval.' });
+        }
+        fullName = sups[0].full_name;
+      }
     }
 
     const token = jwt.sign(

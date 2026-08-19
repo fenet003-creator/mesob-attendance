@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BG Mesob — Internship Attendance Platform</title>
+  <title>BG Mesob — Internship Management Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&family=Space+Mono:wght@400;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,845 +17,192 @@
       --card: #ffffff;
       --border: #e8e4de;
       --border-light: #f0ece6;
-
       --gold: #b8860b;
       --gold-soft: #d4a017;
       --gold-light: #f5e6b8;
       --gold-bg: #fdf8ed;
       --gold-dark: #8b6508;
-
       --berbere: #a0522d;
       --berbere-light: #d4845a;
       --berbere-bg: #fdf0e8;
-
       --teff: #c4973b;
       --teff-light: #e8c876;
-
       --coffee: #3e2723;
       --coffee-light: #5d4037;
-
       --injera: #d7c4a7;
       --injera-light: #ece4d3;
-
       --green: #2d6a4f;
       --green-light: #d8f3dc;
       --red: #9b2226;
       --red-light: #fde2e4;
-
       --radius-sm: 0.25rem;
       --radius-md: 0.5rem;
       --radius-lg: 0.75rem;
       --radius-xl: 1rem;
       --radius-2xl: 1.5rem;
-
       --font-sans: 'Plus Jakarta Sans', 'Noto Sans Ethiopic', system-ui, sans-serif;
       --font-mono: 'Space Mono', monospace;
     }
-
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
     body { font-family: var(--font-sans); color: var(--ink); background: var(--surface); overflow-x: hidden; }
     a { color: inherit; text-decoration: none; }
-    img { display: block; max-width: 100%; }
 
-    /* ============================================
-       HERO SECTION
-       ============================================ */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: hidden;
-      background: var(--coffee);
-    }
+    /* HERO */
+    .hero { min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; background: var(--coffee); }
+    .hero::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60 0L120 60L60 120L0 60Z' fill='none' stroke='%23b8860b' stroke-width='0.5' opacity='0.08'/%3E%3Cpath d='M60 15L105 60L60 105L15 60Z' fill='none' stroke='%23b8860b' stroke-width='0.3' opacity='0.05'/%3E%3Ccircle cx='60' cy='60' r='3' fill='%23b8860b' opacity='0.06'/%3E%3C/svg%3E"); background-size: 120px 120px; pointer-events: none; }
+    .hero::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 20%, rgba(184,134,11,0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(160,82,45,0.08) 0%, transparent 50%); pointer-events: none; }
 
-    /* Ethiopian mesob weaving pattern overlay */
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60 0L120 60L60 120L0 60Z' fill='none' stroke='%23b8860b' stroke-width='0.5' opacity='0.08'/%3E%3Cpath d='M60 15L105 60L60 105L15 60Z' fill='none' stroke='%23b8860b' stroke-width='0.3' opacity='0.05'/%3E%3Cpath d='M60 30L90 60L60 90L30 60Z' fill='none' stroke='%23d4a017' stroke-width='0.3' opacity='0.04'/%3E%3Ccircle cx='60' cy='60' r='3' fill='%23b8860b' opacity='0.06'/%3E%3C/svg%3E");
-      background-size: 120px 120px;
-      pointer-events: none;
-    }
-
-    /* Warm radial glow — coffee ceremony light */
-    .hero::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse at 30% 20%, rgba(184, 134, 11, 0.12) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 80%, rgba(160, 82, 45, 0.08) 0%, transparent 50%);
-      pointer-events: none;
-    }
-
-    /* --- NAV --- */
-    .nav {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.5rem 3rem;
-    }
-
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .nav-brand-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: var(--radius-lg);
-      background: rgba(184, 134, 11, 0.15);
-      border: 1px solid rgba(184, 134, 11, 0.25);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .nav-brand-icon svg {
-      width: 22px;
-      height: 22px;
-      color: var(--gold-soft);
-    }
-
-    .nav-brand h1 {
-      font-size: 1.125rem;
-      font-weight: 800;
-      color: #f9fafb;
-      letter-spacing: -0.02em;
-    }
-
-    .nav-brand span {
-      font-size: 0.65rem;
-      color: rgba(209, 213, 219, 0.5);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 2rem;
-    }
-
-    .nav-links a {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: rgba(209, 213, 219, 0.7);
-      transition: color 0.2s;
-    }
-
+    .nav { position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 3rem; }
+    .nav-brand { display: flex; align-items: center; gap: 0.75rem; }
+    .nav-brand-icon { width: 44px; height: 44px; border-radius: var(--radius-lg); background: rgba(184,134,11,0.15); border: 1px solid rgba(184,134,11,0.25); display: flex; align-items: center; justify-content: center; }
+    .nav-brand-icon svg { width: 22px; height: 22px; color: var(--gold-soft); }
+    .nav-brand h1 { font-size: 1.125rem; font-weight: 800; color: #f9fafb; letter-spacing: -0.02em; }
+    .nav-brand span { font-size: 0.65rem; color: rgba(209,213,219,0.5); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { font-size: 0.875rem; font-weight: 500; color: rgba(209,213,219,0.7); transition: color 0.2s; }
     .nav-links a:hover { color: #f9fafb; }
+    .nav-cta { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.5rem; background: var(--gold); color: #fff !important; border-radius: var(--radius-lg); font-size: 0.875rem; font-weight: 600; transition: background 0.2s, transform 0.15s; border: none; cursor: pointer; }
+    .nav-cta:hover { background: var(--gold-dark); transform: translateY(-1px); }
 
-    .nav-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.625rem 1.5rem;
-      background: var(--gold);
-      color: #fff !important;
-      border-radius: var(--radius-lg);
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: background 0.2s, transform 0.15s;
-      border: none;
-      cursor: pointer;
-    }
+    .hero-content { position: relative; z-index: 5; flex: 1; display: flex; align-items: center; padding: 0 3rem; max-width: 1400px; margin: 0 auto; width: 100%; gap: 4rem; }
+    .hero-text { flex: 1; max-width: 640px; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.375rem 1rem; background: rgba(184,134,11,0.12); border: 1px solid rgba(184,134,11,0.2); border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: var(--gold-soft); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.5rem; }
+    .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold-soft); animation: pulse-dot 2s ease-in-out infinite; }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .hero-text h2 { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; color: #f9fafb; line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 1.5rem; }
+    .hero-text h2 .ethiopic { font-family: 'Noto Sans Ethiopic', sans-serif; color: var(--gold-soft); }
+    .hero-text p { font-size: 1.125rem; color: rgba(209,213,219,0.65); line-height: 1.7; margin-bottom: 2.5rem; max-width: 520px; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-hero-primary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.875rem 2rem; background: var(--gold); color: #fff; border-radius: var(--radius-lg); font-size: 1rem; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+    .btn-hero-primary:hover { background: var(--gold-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(184,134,11,0.3); }
+    .btn-hero-secondary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.875rem 2rem; background: transparent; color: rgba(209,213,219,0.8); border: 1.5px solid rgba(209,213,219,0.2); border-radius: var(--radius-lg); font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+    .btn-hero-secondary:hover { border-color: rgba(209,213,219,0.4); color: #f9fafb; background: rgba(255,255,255,0.05); }
 
-    .nav-cta:hover {
-      background: var(--gold-dark);
-      transform: translateY(-1px);
-    }
-
-    /* --- HERO CONTENT --- */
-    .hero-content {
-      position: relative;
-      z-index: 5;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      padding: 0 3rem;
-      max-width: 1400px;
-      margin: 0 auto;
-      width: 100%;
-      gap: 4rem;
-    }
-
-    .hero-text {
-      flex: 1;
-      max-width: 640px;
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.375rem 1rem;
-      background: rgba(184, 134, 11, 0.12);
-      border: 1px solid rgba(184, 134, 11, 0.2);
-      border-radius: var(--radius-full);
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--gold-soft);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 1.5rem;
-    }
-
-    .hero-badge-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--gold-soft);
-      animation: pulse-dot 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    .hero-text h2 {
-      font-size: clamp(2.5rem, 5vw, 4rem);
-      font-weight: 800;
-      color: #f9fafb;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-      margin-bottom: 1.5rem;
-    }
-
-    .hero-text h2 .ethiopic {
-      font-family: 'Noto Sans Ethiopic', sans-serif;
-      color: var(--gold-soft);
-    }
-
-    .hero-text p {
-      font-size: 1.125rem;
-      color: rgba(209, 213, 219, 0.65);
-      line-height: 1.7;
-      margin-bottom: 2.5rem;
-      max-width: 520px;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .btn-hero-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.875rem 2rem;
-      background: var(--gold);
-      color: #fff;
-      border-radius: var(--radius-lg);
-      font-size: 1rem;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-
-    .btn-hero-primary:hover {
-      background: var(--gold-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(184, 134, 11, 0.3);
-    }
-
-    .btn-hero-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.875rem 2rem;
-      background: transparent;
-      color: rgba(209, 213, 219, 0.8);
-      border: 1.5px solid rgba(209, 213, 219, 0.2);
-      border-radius: var(--radius-lg);
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-
-    .btn-hero-secondary:hover {
-      border-color: rgba(209, 213, 219, 0.4);
-      color: #f9fafb;
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    /* --- HERO VISUAL — Mesob illustration --- */
-    .hero-visual {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      max-width: 500px;
-    }
-
-    .mesob-art {
-      width: 380px;
-      height: 380px;
-      position: relative;
-    }
-
-    .mesob-ring {
-      position: absolute;
-      border-radius: 50%;
-      border: 1.5px solid rgba(184, 134, 11, 0.15);
-    }
-
-    .mesob-ring-1 {
-      inset: 0;
-      animation: rotate-slow 30s linear infinite;
-    }
-
-    .mesob-ring-2 {
-      inset: 30px;
-      border-color: rgba(184, 134, 11, 0.2);
-      animation: rotate-slow 25s linear infinite reverse;
-    }
-
-    .mesob-ring-3 {
-      inset: 60px;
-      border-color: rgba(184, 134, 11, 0.25);
-      animation: rotate-slow 20s linear infinite;
-    }
-
-    .mesob-ring-4 {
-      inset: 90px;
-      border-color: rgba(212, 160, 23, 0.3);
-      background: rgba(184, 134, 11, 0.03);
-    }
-
-    @keyframes rotate-slow {
-      to { transform: rotate(360deg); }
-    }
-
-    .mesob-center {
-      position: absolute;
-      inset: 110px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(184, 134, 11, 0.15), rgba(160, 82, 45, 0.1));
-      border: 1px solid rgba(184, 134, 11, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .mesob-center-text {
-      font-family: 'Noto Sans Ethiopic', sans-serif;
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--gold-soft);
-    }
-
-    .mesob-center-sub {
-      font-size: 0.6rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: rgba(212, 160, 23, 0.6);
-    }
-
-    /* Floating dots around mesob */
-    .mesob-dot {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: var(--gold-soft);
-      opacity: 0.4;
-    }
-
+    .hero-visual { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; max-width: 500px; }
+    .mesob-art { width: 380px; height: 380px; position: relative; }
+    .mesob-ring { position: absolute; border-radius: 50%; border: 1.5px solid rgba(184,134,11,0.15); }
+    .mesob-ring-1 { inset: 0; animation: rotate-slow 30s linear infinite; }
+    .mesob-ring-2 { inset: 30px; border-color: rgba(184,134,11,0.2); animation: rotate-slow 25s linear infinite reverse; }
+    .mesob-ring-3 { inset: 60px; border-color: rgba(184,134,11,0.25); animation: rotate-slow 20s linear infinite; }
+    .mesob-ring-4 { inset: 90px; border-color: rgba(212,160,23,0.3); background: rgba(184,134,11,0.03); }
+    @keyframes rotate-slow { to { transform: rotate(360deg); } }
+    .mesob-center { position: absolute; inset: 110px; border-radius: 50%; background: linear-gradient(135deg, rgba(184,134,11,0.15), rgba(160,82,45,0.1)); border: 1px solid rgba(184,134,11,0.2); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.25rem; }
+    .mesob-center-text { font-family: 'Noto Sans Ethiopic', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--gold-soft); }
+    .mesob-center-sub { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(212,160,23,0.6); }
+    .mesob-dot { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: var(--gold-soft); opacity: 0.4; }
     .mesob-dot:nth-child(1) { top: 10%; left: 50%; animation: float 4s ease-in-out infinite; }
     .mesob-dot:nth-child(2) { top: 50%; right: 5%; animation: float 4s ease-in-out infinite 1s; }
     .mesob-dot:nth-child(3) { bottom: 10%; left: 50%; animation: float 4s ease-in-out infinite 2s; }
     .mesob-dot:nth-child(4) { top: 50%; left: 5%; animation: float 4s ease-in-out infinite 3s; }
+    @keyframes float { 0%, 100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-8px); opacity: 0.8; } }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); opacity: 0.4; }
-      50% { transform: translateY(-8px); opacity: 0.8; }
-    }
+    .hero-stats { position: relative; z-index: 5; display: flex; justify-content: center; gap: 4rem; padding: 2rem 3rem; border-top: 1px solid rgba(255,255,255,0.06); margin-top: auto; }
+    .hero-stat { text-align: center; }
+    .hero-stat-value { font-size: 1.75rem; font-weight: 800; color: var(--gold-soft); letter-spacing: -0.02em; font-family: var(--font-mono); }
+    .hero-stat-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(209,213,219,0.4); margin-top: 0.25rem; }
 
-    /* --- STATS BAR --- */
-    .hero-stats {
-      position: relative;
-      z-index: 5;
-      display: flex;
-      justify-content: center;
-      gap: 4rem;
-      padding: 2rem 3rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      margin-top: auto;
-    }
+    /* SECTIONS */
+    .features { padding: 6rem 3rem; max-width: 1200px; margin: 0 auto; }
+    .section-header { text-align: center; margin-bottom: 4rem; }
+    .section-eyebrow { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--gold); margin-bottom: 0.75rem; }
+    .section-title { font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 800; letter-spacing: -0.03em; color: var(--ink); line-height: 1.2; }
+    .section-title .ethiopic { font-family: 'Noto Sans Ethiopic', sans-serif; color: var(--gold); }
+    .section-subtitle { font-size: 1rem; color: var(--ink-muted); margin-top: 0.75rem; max-width: 520px; margin-left: auto; margin-right: auto; line-height: 1.6; }
 
-    .hero-stat {
-      text-align: center;
-    }
-
-    .hero-stat-value {
-      font-size: 1.75rem;
-      font-weight: 800;
-      color: var(--gold-soft);
-      letter-spacing: -0.02em;
-      font-family: var(--font-mono);
-    }
-
-    .hero-stat-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: rgba(209, 213, 219, 0.4);
-      margin-top: 0.25rem;
-    }
-
-    /* ============================================
-       FEATURES SECTION — Ethiopian food colors
-       ============================================ */
-    .features {
-      padding: 6rem 3rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .section-header {
-      text-align: center;
-      margin-bottom: 4rem;
-    }
-
-    .section-eyebrow {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--gold);
-      margin-bottom: 0.75rem;
-    }
-
-    .section-title {
-      font-size: clamp(1.75rem, 3vw, 2.5rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      color: var(--ink);
-      line-height: 1.2;
-    }
-
-    .section-title .ethiopic {
-      font-family: 'Noto Sans Ethiopic', sans-serif;
-      color: var(--gold);
-    }
-
-    .section-subtitle {
-      font-size: 1rem;
-      color: var(--ink-muted);
-      margin-top: 0.75rem;
-      max-width: 520px;
-      margin-left: auto;
-      margin-right: auto;
-      line-height: 1.6;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-    }
-
-    .feature-card {
-      background: var(--card);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-xl);
-      padding: 2rem;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .feature-card:hover {
-      border-color: var(--border);
-      box-shadow: 0 8px 24px rgba(26, 26, 46, 0.06);
-      transform: translateY(-2px);
-    }
-
-    .feature-card-accent {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-    }
-
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .feature-card { background: var(--card); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 2rem; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); position: relative; overflow: hidden; }
+    .feature-card:hover { border-color: var(--border); box-shadow: 0 8px 24px rgba(26,26,46,0.06); transform: translateY(-2px); }
+    .feature-card-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
     .accent-gold { background: var(--gold); }
     .accent-berbere { background: var(--berbere); }
     .accent-coffee { background: var(--coffee-light); }
     .accent-green { background: var(--green); }
     .accent-teff { background: var(--teff); }
     .accent-red { background: var(--red); }
-
-    .feature-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1.25rem;
-    }
-
-    .feature-icon svg {
-      width: 24px;
-      height: 24px;
-    }
-
+    .feature-icon { width: 48px; height: 48px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; }
+    .feature-icon svg { width: 24px; height: 24px; }
     .icon-gold { background: var(--gold-bg); color: var(--gold); }
     .icon-berbere { background: var(--berbere-bg); color: var(--berbere); }
     .icon-coffee { background: #efebe9; color: var(--coffee-light); }
     .icon-green { background: var(--green-light); color: var(--green); }
     .icon-teff { background: #fef9e7; color: var(--teff); }
     .icon-red { background: var(--red-light); color: var(--red); }
+    .feature-card h3 { font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.875rem; color: var(--ink-muted); line-height: 1.6; }
 
-    .feature-card h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      margin-bottom: 0.5rem;
-    }
+    /* MESOB ABOUT */
+    .mesob-about { padding: 6rem 3rem; background: var(--coffee); position: relative; overflow: hidden; }
+    .mesob-about::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0L100 50L50 100L0 50Z' fill='none' stroke='%23b8860b' stroke-width='0.3' opacity='0.06'/%3E%3C/svg%3E"); background-size: 100px 100px; pointer-events: none; }
+    .mesob-about-inner { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+    .mesob-about-header { text-align: center; margin-bottom: 3rem; }
+    .mesob-about-header h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 800; color: #f9fafb; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 1rem; }
+    .mesob-about-header h2 .ethiopic { font-family: 'Noto Sans Ethiopic', sans-serif; color: var(--gold-soft); }
+    .mesob-about-header p { font-size: 1rem; color: rgba(209,213,219,0.65); line-height: 1.7; max-width: 640px; margin: 0 auto; }
+    .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    .service-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-xl); padding: 1.75rem; transition: all 0.25s; }
+    .service-card:hover { background: rgba(255,255,255,0.07); border-color: rgba(184,134,11,0.2); }
+    .service-card-icon { width: 40px; height: 40px; border-radius: var(--radius-md); background: rgba(184,134,11,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+    .service-card-icon svg { width: 20px; height: 20px; color: var(--gold-soft); }
+    .service-card h4 { font-size: 0.95rem; font-weight: 700; color: #f9fafb; margin-bottom: 0.375rem; }
+    .service-card p { font-size: 0.8rem; color: rgba(209,213,219,0.5); line-height: 1.5; }
+    .service-card .service-link { display: inline-flex; align-items: center; gap: 0.375rem; margin-top: 0.75rem; font-size: 0.75rem; font-weight: 600; color: var(--gold-soft); transition: color 0.2s; }
+    .service-card .service-link:hover { color: var(--gold-light); }
+    .service-card .service-link svg { width: 14px; height: 14px; }
 
-    .feature-card p {
-      font-size: 0.875rem;
-      color: var(--ink-muted);
-      line-height: 1.6;
-    }
+    /* HOW IT WORKS */
+    .how-it-works { padding: 6rem 3rem; max-width: 1200px; margin: 0 auto; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 3rem; position: relative; }
+    .steps::before { content: ''; position: absolute; top: 32px; left: calc(16.67% + 1rem); right: calc(16.67% + 1rem); height: 2px; background: linear-gradient(90deg, var(--gold-light), var(--gold), var(--gold-light)); opacity: 0.3; }
+    .step { text-align: center; position: relative; }
+    .step-number { width: 64px; height: 64px; border-radius: 50%; background: var(--gold-bg); border: 2px solid var(--gold-light); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 1.25rem; font-weight: 800; color: var(--gold); font-family: var(--font-mono); position: relative; z-index: 2; }
+    .step h3 { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step p { font-size: 0.875rem; color: var(--ink-muted); line-height: 1.6; max-width: 280px; margin: 0 auto; }
 
-    /* ============================================
-       CULTURAL SECTION
-       ============================================ */
-    .cultural {
-      padding: 6rem 3rem;
-      background: var(--coffee);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .cultural::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0L100 50L50 100L0 50Z' fill='none' stroke='%23b8860b' stroke-width='0.3' opacity='0.06'/%3E%3C/svg%3E");
-      background-size: 100px 100px;
-      pointer-events: none;
-    }
-
-    .cultural-inner {
-      position: relative;
-      z-index: 1;
-      max-width: 1200px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4rem;
-      align-items: center;
-    }
-
-    .cultural-text h2 {
-      font-size: clamp(1.75rem, 3vw, 2.5rem);
-      font-weight: 800;
-      color: #f9fafb;
-      letter-spacing: -0.03em;
-      line-height: 1.2;
-      margin-bottom: 1.25rem;
-    }
-
-    .cultural-text h2 .ethiopic {
-      font-family: 'Noto Sans Ethiopic', sans-serif;
-      color: var(--gold-soft);
-    }
-
-    .cultural-text p {
-      font-size: 1rem;
-      color: rgba(209, 213, 219, 0.65);
-      line-height: 1.7;
-      margin-bottom: 1rem;
-    }
-
-    .cultural-values {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-top: 2rem;
-    }
-
-    .cultural-value {
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.04);
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .cultural-value-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .cultural-value-icon svg {
-      width: 18px;
-      height: 18px;
-      color: var(--gold-soft);
-    }
-
-    .cultural-value h4 {
-      font-size: 0.875rem;
-      font-weight: 700;
-      color: #f9fafb;
-      margin-bottom: 0.125rem;
-    }
-
-    .cultural-value p {
-      font-size: 0.8rem;
-      color: rgba(209, 213, 219, 0.5);
-      margin: 0;
-    }
-
-    .cultural-visual {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mesob-illustration {
-      width: 320px;
-      height: 320px;
-      position: relative;
-    }
-
-    .mesob-basket {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background:
-        conic-gradient(
-          from 0deg,
-          rgba(184, 134, 11, 0.2) 0deg,
-          rgba(160, 82, 45, 0.15) 30deg,
-          rgba(196, 151, 59, 0.2) 60deg,
-          rgba(184, 134, 11, 0.25) 90deg,
-          rgba(160, 82, 45, 0.15) 120deg,
-          rgba(196, 151, 59, 0.2) 150deg,
-          rgba(184, 134, 11, 0.2) 180deg,
-          rgba(160, 82, 45, 0.15) 210deg,
-          rgba(196, 151, 59, 0.2) 240deg,
-          rgba(184, 134, 11, 0.25) 270deg,
-          rgba(160, 82, 45, 0.15) 300deg,
-          rgba(196, 151, 59, 0.2) 330deg,
-          rgba(184, 134, 11, 0.2) 360deg
-        );
-      border: 2px solid rgba(184, 134, 11, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: rotate-slow 40s linear infinite;
-    }
-
-    .mesob-basket-inner {
-      width: 65%;
-      height: 65%;
-      border-radius: 50%;
-      background: var(--coffee);
-      border: 1px solid rgba(184, 134, 11, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .mesob-basket-inner .ethiopic {
-      font-family: 'Noto Sans Ethiopic', sans-serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--gold-soft);
-    }
-
-    .mesob-basket-inner span {
-      font-size: 0.6rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: rgba(212, 160, 23, 0.5);
-    }
-
-    /* ============================================
-       HOW IT WORKS
-       ============================================ */
-    .how-it-works {
-      padding: 6rem 3rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
-      margin-top: 3rem;
-      position: relative;
-    }
-
-    .steps::before {
-      content: '';
-      position: absolute;
-      top: 32px;
-      left: calc(16.67% + 1rem);
-      right: calc(16.67% + 1rem);
-      height: 2px;
-      background: linear-gradient(90deg, var(--gold-light), var(--gold), var(--gold-light));
-      opacity: 0.3;
-    }
-
-    .step {
-      text-align: center;
-      position: relative;
-    }
-
-    .step-number {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: var(--gold-bg);
-      border: 2px solid var(--gold-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1.5rem;
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: var(--gold);
-      font-family: var(--font-mono);
-      position: relative;
-      z-index: 2;
-    }
-
-    .step h3 {
-      font-size: 1.125rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .step p {
-      font-size: 0.875rem;
-      color: var(--ink-muted);
-      line-height: 1.6;
-      max-width: 280px;
-      margin: 0 auto;
-    }
-
-    /* ============================================
-       FOOTER
-       ============================================ */
-    .footer {
-      padding: 3rem;
-      background: var(--ink);
-      text-align: center;
-    }
-
-    .footer-brand {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-
-    .footer-brand-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-md);
-      background: rgba(184, 134, 11, 0.12);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .footer-brand-icon svg {
-      width: 18px;
-      height: 18px;
-      color: var(--gold-soft);
-    }
-
-    .footer-brand h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #f9fafb;
-    }
-
-    .footer p {
-      font-size: 0.8rem;
-      color: rgba(209, 213, 219, 0.4);
-      margin-top: 0.5rem;
-    }
-
-    .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 2rem;
-      margin-top: 1.5rem;
-    }
-
-    .footer-links a {
-      font-size: 0.8rem;
-      color: rgba(209, 213, 219, 0.5);
-      transition: color 0.2s;
-    }
-
+    /* FOOTER */
+    .footer { padding: 3rem; background: var(--ink); text-align: center; }
+    .footer-brand { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .footer-brand-icon { width: 36px; height: 36px; border-radius: var(--radius-md); background: rgba(184,134,11,0.12); display: flex; align-items: center; justify-content: center; }
+    .footer-brand-icon svg { width: 18px; height: 18px; color: var(--gold-soft); }
+    .footer-brand h3 { font-size: 1rem; font-weight: 700; color: #f9fafb; }
+    .footer p { font-size: 0.8rem; color: rgba(209,213,219,0.4); margin-top: 0.5rem; }
+    .footer-links { display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem; }
+    .footer-links a { font-size: 0.8rem; color: rgba(209,213,219,0.5); transition: color 0.2s; }
     .footer-links a:hover { color: var(--gold-soft); }
+    .footer-divider { width: 60px; height: 2px; background: var(--gold); opacity: 0.3; margin: 1.5rem auto; }
+    .footer-bottom { font-size: 0.7rem; color: rgba(209,213,219,0.25); margin-top: 1rem; }
+    .footer-bottom .ethiopic { font-family: 'Noto Sans Ethiopic', sans-serif; color: rgba(212,160,23,0.4); }
 
-    .footer-divider {
-      width: 60px;
-      height: 2px;
-      background: var(--gold);
-      opacity: 0.3;
-      margin: 1.5rem auto;
-    }
+    /* CHATBOT */
+    .chatbot-toggle { position: fixed; bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px; border-radius: 50%; background: var(--gold); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(184,134,11,0.4); z-index: 1000; transition: all 0.3s; }
+    .chatbot-toggle:hover { background: var(--gold-dark); transform: scale(1.05); }
+    .chatbot-toggle svg { width: 24px; height: 24px; }
+    .chatbot-toggle .chat-close { display: none; }
+    .chatbot-toggle.active .chat-icon { display: none; }
+    .chatbot-toggle.active .chat-close { display: block; }
+    .chatbot-window { position: fixed; bottom: 5rem; right: 1.5rem; width: 380px; height: 520px; background: var(--card); border-radius: var(--radius-2xl); box-shadow: 0 12px 48px rgba(26,26,46,0.15); border: 1px solid var(--border); z-index: 999; display: none; flex-direction: column; overflow: hidden; }
+    .chatbot-window.open { display: flex; }
+    .chatbot-header { padding: 1rem 1.25rem; background: var(--coffee); color: #fff; display: flex; align-items: center; gap: 0.75rem; }
+    .chatbot-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(184,134,11,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .chatbot-avatar svg { width: 18px; height: 18px; color: var(--gold-soft); }
+    .chatbot-header-text h4 { font-size: 0.875rem; font-weight: 700; }
+    .chatbot-header-text span { font-size: 0.7rem; color: rgba(209,213,219,0.6); }
+    .chatbot-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    .chat-msg { max-width: 85%; padding: 0.625rem 1rem; border-radius: var(--radius-lg); font-size: 0.8rem; line-height: 1.5; }
+    .chat-msg.bot { background: var(--surface-warm); color: var(--ink); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .chat-msg.user { background: var(--gold); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .chat-msg.bot a { color: var(--gold-dark); font-weight: 600; }
+    .chat-suggestions { display: flex; flex-wrap: wrap; gap: 0.375rem; padding: 0.5rem 1rem; }
+    .chat-suggestion { padding: 0.375rem 0.75rem; background: var(--gold-bg); border: 1px solid var(--gold-light); border-radius: 999px; font-size: 0.7rem; font-weight: 600; color: var(--gold-dark); cursor: pointer; transition: all 0.2s; }
+    .chat-suggestion:hover { background: var(--gold-light); }
+    .chatbot-input { display: flex; padding: 0.75rem 1rem; border-top: 1px solid var(--border-light); gap: 0.5rem; }
+    .chatbot-input input { flex: 1; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 0.5rem 0.75rem; font-size: 0.8rem; font-family: var(--font-sans); outline: none; }
+    .chatbot-input input:focus { border-color: var(--gold); }
+    .chatbot-input button { width: 36px; height: 36px; border-radius: 50%; background: var(--gold); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .chatbot-input button svg { width: 16px; height: 16px; }
+    .chat-typing { font-size: 0.7rem; color: var(--ink-muted); padding: 0 1rem 0.5rem; display: none; }
+    .chat-typing.show { display: block; }
 
-    .footer-bottom {
-      font-size: 0.7rem;
-      color: rgba(209, 213, 219, 0.25);
-      margin-top: 1rem;
-    }
-
-    .footer-bottom .ethiopic {
-      font-family: 'Noto Sans Ethiopic', sans-serif;
-      color: rgba(212, 160, 23, 0.4);
-    }
-
-    /* ============================================
-       RESPONSIVE
-       ============================================ */
     @media (max-width: 1024px) {
       .hero-content { flex-direction: column; text-align: center; padding-top: 2rem; }
       .hero-text { max-width: 100%; }
@@ -865,12 +212,9 @@
       .mesob-art { width: 280px; height: 280px; }
       .hero-stats { gap: 2rem; flex-wrap: wrap; }
       .features-grid { grid-template-columns: repeat(2, 1fr); }
-      .cultural-inner { grid-template-columns: 1fr; text-align: center; }
-      .cultural-values { align-items: center; }
-      .cultural-visual { order: -1; }
+      .services-grid { grid-template-columns: repeat(2, 1fr); }
       .steps::before { display: none; }
     }
-
     @media (max-width: 768px) {
       .nav { padding: 1rem 1.5rem; }
       .nav-links { display: none; }
@@ -878,26 +222,17 @@
       .hero-stats { padding: 1.5rem; gap: 1.5rem; }
       .features { padding: 4rem 1.5rem; }
       .features-grid { grid-template-columns: 1fr; }
-      .cultural { padding: 4rem 1.5rem; }
+      .services-grid { grid-template-columns: 1fr; }
+      .mesob-about { padding: 4rem 1.5rem; }
       .how-it-works { padding: 4rem 1.5rem; }
       .steps { grid-template-columns: 1fr; gap: 2.5rem; }
       .footer { padding: 2rem 1.5rem; }
       .footer-links { flex-wrap: wrap; gap: 1rem; }
+      .chatbot-window { width: calc(100vw - 2rem); right: 1rem; bottom: 4.5rem; }
     }
 
-    /* ============================================
-       ANIMATIONS
-       ============================================ */
-    @keyframes fade-in-up {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .animate-in {
-      opacity: 0;
-      animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
+    @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { opacity: 0; animation: fade-in-up 0.6s cubic-bezier(0.16,1,0.3,1) forwards; }
     .delay-1 { animation-delay: 0.1s; }
     .delay-2 { animation-delay: 0.2s; }
     .delay-3 { animation-delay: 0.3s; }
@@ -905,7 +240,7 @@
   </style>
 </head>
 <body>
-  <!-- ============ HERO ============ -->
+  <!-- HERO -->
   <section class="hero">
     <nav class="nav">
       <div class="nav-brand">
@@ -918,8 +253,9 @@
         </div>
       </div>
       <div class="nav-links">
+        <a href="#about-mesob">About MESOB</a>
         <a href="#features">Features</a>
-        <a href="#about">About</a>
+        <a href="#services">Services</a>
         <a href="#how">How It Works</a>
         <a href="/login.html" class="nav-cta">
           Sign In
@@ -932,23 +268,23 @@
       <div class="hero-text">
         <div class="hero-badge animate-in delay-1">
           <span class="hero-badge-dot"></span>
-          Federal Internship Management System
+          Internship Management System
         </div>
         <h2 class="animate-in delay-2">
-          Managing Ethiopia's<br>
-          Future <span class="ethiopic">መንግስት</span><br>
-          Workforce
+          Building Ethiopia's<br>
+          Next <span class="ethiopic">ŝema.nextLine()</span><br>
+          Generation
         </h2>
         <p class="animate-in delay-3">
-          A unified platform for tracking intern attendance, managing placements, and building the next generation of Ethiopia's professional talent across federal institutions.
+          A unified platform for tracking intern attendance, managing placements, and building the next generation of Ethiopia's professional talent. Powered by the MESOB Center — Ethiopia's comprehensive services hub.
         </p>
         <div class="hero-actions animate-in delay-4">
-          <a href="/login.html" class="btn-hero-primary">
-            Access Portal
+          <a href="/signup.html" class="btn-hero-primary">
+            Apply for Intern
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
-          <a href="#features" class="btn-hero-secondary">
-            Learn More
+          <a href="/login.html" class="btn-hero-secondary">
+            Sign In
           </a>
         </div>
       </div>
@@ -991,11 +327,84 @@
     </div>
   </section>
 
-  <!-- ============ FEATURES ============ -->
+  <!-- ABOUT MESOB -->
+  <section class="mesob-about" id="about-mesob">
+    <div class="mesob-about-inner">
+      <div class="mesob-about-header">
+        <div class="section-eyebrow" style="color: var(--gold-soft);">About MESOB Center</div>
+        <h2>
+          <span class="ethiopic">መሶብ ማዕከል</span> —<br>
+          Ethiopia's Comprehensive<br>
+          Government Services Hub
+        </h2>
+        <p>
+          MESOB Center is a one-stop platform consolidating Ethiopian government services — from trade and business registration to immigration, customs, agriculture, and more. Our internship platform extends this mission by building the next generation of professionals who will serve Ethiopia's growing institutions.
+        </p>
+      </div>
+
+      <div class="services-grid">
+        <div class="service-card">
+          <div class="service-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          </div>
+          <h4>Trade & Business Services</h4>
+          <p>Business name registration, license amendments, and organization approval through the Ministry of Trade and Regional Integration (MOTRI). Fees from 27–127 birr.</p>
+          <span class="service-link">motri.gov.et <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        </div>
+
+        <div class="service-card">
+          <div class="service-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <h4>Immigration & Identity</h4>
+          <p>Fayda National ID registration, Ethiopian Origin ID (Yellow Card), passport services, and visa processing through ICS. ID booking is free.</p>
+          <span class="service-link">ics.gov.et <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        </div>
+
+        <div class="service-card">
+          <div class="service-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h4>Customs & Trade</h4>
+          <p>Customs duty exemptions for spare parts, construction materials, and capital goods. Bonded warehouse licenses from 1,250 ETB/year.</p>
+          <span class="service-link">Customs Authority <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        </div>
+
+        <div class="service-card">
+          <div class="service-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <h4>Agriculture & Environment</h4>
+          <p>Pesticide, fertilizer, and seed competency certificates through EAA. Environmental licenses and NON-GMO certificates through EPA.</p>
+          <span class="service-link">eaa.gov.et <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        </div>
+
+        <div class="service-card">
+          <div class="service-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <h4>Food & Drug Authority</h4>
+          <p>Competency certificates for medicine and medical device importers and distributors. Warehouse licenses for pharmaceutical storage.</p>
+          <span class="service-link">efda.gov.et <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        </div>
+
+        <div class="service-card">
+          <div class="service-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h4>Transport & Logistics</h4>
+          <p>Commercial road transport operator licenses, freight competency certifications, and border entry permit renewals through MoTL.</p>
+          <span class="service-link">motl.gov.et <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
   <section class="features" id="features">
     <div class="section-header">
       <div class="section-eyebrow">Platform Capabilities</div>
-      <h2 class="section-title">Built for <span class="ethiopic">Ethiopia's</span> Federal Institutions</h2>
+      <h2 class="section-title">Built for <span class="ethiopic">Ethiopia's</span> Growing Institutions</h2>
       <p class="section-subtitle">Comprehensive internship management designed for efficiency, accountability, and transparency across government offices.</p>
     </div>
 
@@ -1006,7 +415,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
         <h3>Real-Time Attendance</h3>
-        <p>Track check-ins and check-outs with configurable thresholds for Present, Late, and Absent statuses.</p>
+        <p>Track check-ins and check-outs with configurable thresholds for Present (before 8:15), Late (8:15–8:30), and Absent statuses.</p>
       </div>
 
       <div class="feature-card">
@@ -1033,7 +442,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
         </div>
         <h3>Placement Tracking</h3>
-        <p>Manage internship placements across federal departments with capacity tracking and status updates.</p>
+        <p>Manage internship placements across departments with capacity tracking and status updates.</p>
       </div>
 
       <div class="feature-card">
@@ -1056,79 +465,18 @@
     </div>
   </section>
 
-  <!-- ============ CULTURAL / ABOUT ============ -->
-  <section class="cultural" id="about">
-    <div class="cultural-inner">
-      <div class="cultural-text">
-        <h2>
-          <span class="ethiopic">መሶብ</span> —<br>
-          Where Ethiopia's Talent<br>
-          Gathers
-        </h2>
-        <p>
-          In Ethiopian tradition, the mesob is a gathering place — where communities come together to share, learn, and grow. BG Mesob brings that spirit to federal internship management.
-        </p>
-        <p>
-          Our platform ensures every intern's journey is tracked, every supervisor's guidance is supported, and every department's needs are met with precision and care.
-        </p>
-
-        <div class="cultural-values">
-          <div class="cultural-value">
-            <div class="cultural-value-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <div>
-              <h4>Accountability</h4>
-              <p>Transparent attendance and activity tracking for all participants</p>
-            </div>
-          </div>
-          <div class="cultural-value">
-            <div class="cultural-value-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div>
-              <h4>Collaboration</h4>
-              <p>Connecting interns, supervisors, and administrators seamlessly</p>
-            </div>
-          </div>
-          <div class="cultural-value">
-            <div class="cultural-value-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            </div>
-            <div>
-              <h4>Development</h4>
-              <p>Building Ethiopia's next generation of professional leaders</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="cultural-visual">
-        <div class="mesob-illustration">
-          <div class="mesob-basket">
-            <div class="mesob-basket-inner">
-              <span class="ethiopic">መሶብ</span>
-              <span>BG Mesob</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ HOW IT WORKS ============ -->
+  <!-- HOW IT WORKS -->
   <section class="how-it-works" id="how">
     <div class="section-header">
       <div class="section-eyebrow">Getting Started</div>
       <h2 class="section-title">How It Works</h2>
       <p class="section-subtitle">From application to completion — a streamlined process for every intern's journey.</p>
     </div>
-
     <div class="steps">
       <div class="step">
         <div class="step-number">01</div>
         <h3>Apply</h3>
-        <p>Submit your internship application with required documents and preferred department.</p>
+        <p>Submit your internship application with required documents and preferred department through the MESOB portal.</p>
       </div>
       <div class="step">
         <div class="step-number">02</div>
@@ -1138,12 +486,12 @@
       <div class="step">
         <div class="step-number">03</div>
         <h3>Check In Daily</h3>
-        <p>Record your attendance each workday. Track your progress and build your portfolio.</p>
+        <p>Record your attendance each workday. Track your progress, build your portfolio, and grow your career.</p>
       </div>
     </div>
   </section>
 
-  <!-- ============ FOOTER ============ -->
+  <!-- FOOTER -->
   <footer class="footer">
     <div class="footer-brand">
       <div class="footer-brand-icon">
@@ -1151,11 +499,11 @@
       </div>
       <h3>BG Mesob</h3>
     </div>
-    <p>Federal Internship Attendance Management System</p>
+    <p>Internship Attendance Management System</p>
     <div class="footer-links">
       <a href="/login.html">Sign In</a>
+      <a href="#about-mesob">About MESOB</a>
       <a href="#features">Features</a>
-      <a href="#about">About</a>
       <a href="#how">How It Works</a>
     </div>
     <div class="footer-divider"></div>
@@ -1164,7 +512,53 @@
     </div>
   </footer>
 
+  <!-- CHATBOT -->
+  <button class="chatbot-toggle" id="chatToggle" aria-label="Open support chat">
+    <svg class="chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <svg class="chat-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div class="chatbot-window" id="chatWindow">
+    <div class="chatbot-header">
+      <div class="chatbot-avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="chatbot-header-text">
+        <h4>MESOB Support</h4>
+        <span>Ask about government services</span>
+      </div>
+    </div>
+    <div class="chatbot-messages" id="chatMessages">
+      <div class="chat-msg bot">Welcome to <strong>MESOB Support</strong>! I can help you with questions about Ethiopian government services, business registration, immigration, customs, and more. What would you like to know?</div>
+    </div>
+    <div class="chat-suggestions" id="chatSuggestions">
+      <button class="chat-suggestion" data-q="How do I register a business?">Business Registration</button>
+      <button class="chat-suggestion" data-q="How do I get a Fayda ID?">Fayda ID</button>
+      <button class="chat-suggestion" data-q="Passport renewal process">Passport</button>
+      <button class="chat-suggestion" data-q="Customs duty exemptions">Customs</button>
+    </div>
+    <div class="chat-typing" id="chatTyping">MESOB is typing...</div>
+    <div class="chatbot-input">
+      <input type="text" id="chatInput" placeholder="Ask about MESOB services..." maxlength="500">
+      <button id="chatSend" aria-label="Send message">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
   <script>
+    // Auto-redirect logged-in users to their dashboard
+    (function() {
+      try {
+        const u = JSON.parse(localStorage.getItem('user'));
+        const t = localStorage.getItem('token');
+        if (u && t) {
+          if (u.role === 'admin') window.location.href = '/admin/dashboard.html';
+          else if (u.role === 'supervisor') window.location.href = '/supervisor/dashboard.html';
+          else window.location.href = '/intern/dashboard.html';
+        }
+      } catch(e) {}
+    })();
+
     // Intersection Observer for scroll animations
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -1174,21 +568,117 @@
         }
       });
     }, { threshold: 0.1 });
-
-    document.querySelectorAll('.feature-card, .step, .cultural-value').forEach(el => {
+    document.querySelectorAll('.feature-card, .step, .service-card').forEach(el => {
       el.style.opacity = '0';
       el.style.transform = 'translateY(20px)';
-      el.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+      el.style.transition = 'all 0.6s cubic-bezier(0.16,1,0.3,1)';
       observer.observe(el);
     });
+    document.querySelectorAll('.feature-card').forEach((card, i) => { card.style.transitionDelay = `${i * 0.08}s`; });
+    document.querySelectorAll('.service-card').forEach((card, i) => { card.style.transitionDelay = `${i * 0.08}s`; });
+    document.querySelectorAll('.step').forEach((step, i) => { step.style.transitionDelay = `${i * 0.12}s`; });
 
-    // Stagger feature cards
-    document.querySelectorAll('.feature-card').forEach((card, i) => {
-      card.style.transitionDelay = `${i * 0.08}s`;
+    // ====== CHATBOT ======
+    const KB = {
+      "business registration": {
+        answer: `<strong>Business Name Registration (MOTRI)</strong><br><br>To register a new business name:<br>• Renewed ID or passport (main pages)<br>• Valid business license<br>• Three alternative name choices<br><br><strong>Time:</strong> 15 minutes<br><strong>Fee:</strong> 127 birr<br><strong>Website:</strong> motri.gov.et<br><br>For organization name approval, the fee is 27 birr and requires a draft memorandum of association.`,
+        keywords: ["business", "register", "registration", "company", "trade", "motri", "license", "enterprise", "name"]
+      },
+      "fayda id": {
+        answer: `<strong>Fayda National ID Registration</strong><br><br>Register for Ethiopia's National ID (Fayda ID):<br>• Support letters for registration, booking, and printing<br>• Full address of recipient<br><br><strong>Time:</strong> 10 minutes<br><strong>Fee:</strong> Booking is FREE, delivery is FREE<br>• Printing: Premier (600+ ETB), Ordinary (324+ ETB)<br><strong>Website:</strong> id.gov.et<br><br>The Fayda ID is required for many government services including bank accounts.`,
+        keywords: ["fayda", "id", "national", "identity", "card", "register", "registration"]
+      },
+      "passport": {
+        answer: `<strong>Passport Services (ICS)</strong><br><br>• <strong>2-Day Urgent Renewal:</strong> 28,000–33,000 ETB<br>• <strong>5-Day Urgent Renewal:</strong> 28,000–33,000 ETB<br>• Lost/stolen passport replacement available<br>• Work/investment visa services<br>• Temporary residence permits<br><br><strong>Website:</strong> ics.gov.et<br><br>For Ethiopian Origin ID (Yellow Card): 200–400 USD, 1–5 days processing.`,
+        keywords: ["passport", "renewal", "renew", "urgent", "lost", "stolen", "visa", "yellow card", "origin id", "immigration"]
+      },
+      "customs": {
+        answer: `<strong>Customs Duty Exemptions</strong><br><br>Three types of exemptions available:<br>• <strong>Spare Parts:</strong> 1 day, 20 USD — parts ≤15% of capital goods value<br>• <strong>Construction Materials:</strong> 2 days, 20 USD — requires BQ and permit<br>• <strong>Capital Goods:</strong> 1 day, 20 USD — requires investment license<br><br><strong>Bonded Warehouse Licenses:</strong><br>• Temporary/Permanent bonded warehouse: 1,250 ETB/year<br>• Private warehouse: 1,250 ETB/year<br>• Relief items warehouse: 1,250 ETB/year`,
+        keywords: ["customs", "duty", "exemption", "warehouse", "bonded", "import", "export", "spare parts", "construction"]
+      },
+      "agriculture": {
+        answer: `<strong>Agricultural Services (EAA)</strong><br><br>Competency certificates available for:<br>• Pesticide manufacturers & importers<br>• Fertilizer manufacturers<br>• Seed importers, producers & processors<br>• Veterinary drug wholesalers & importers<br>• Fumigation service providers<br><br><strong>Processing:</strong> 13–18 hours<br><strong>Website:</strong> eaa.gov.et<br><br>Environmental licenses and NON-GMO certificates available through EPA (epa.gov.et).`,
+        keywords: ["agriculture", "agricultural", "pesticide", "fertilizer", "seed", "veterinary", "fumigation", "eaa", "epa", "environment"]
+      },
+      "food drug": {
+        answer: `<strong>Food & Drug Authority (EFDA)</strong><br><br>Services include:<br>• Competency certificate issuance for medicine importers<br>• Medical device distributor certifications<br>• Certificate renewal, amendment & replacement<br>• Warehouse licenses for pharmaceutical storage<br><br><strong>Website:</strong> efda.gov.et<br><br>Education credential authentication available through ETA (neta.gov.et).`,
+        keywords: ["food", "drug", "medicine", "pharmaceutical", "medical", "efda", "health", "certificate"]
+      },
+      "transport": {
+        answer: `<strong>Transport & Logistics (MoTL)</strong><br><br>Services include:<br>• Commercial road transport operator licenses<br>• Freight transport competency certifications<br>• Border entry permit issuance & renewal<br><br><strong>Fees:</strong><br>• Border entry permit renewal: 2,000 Birr (driver), 1,000 Birr (assistant)<br><br><strong>Website:</strong> motl.gov.et`,
+        keywords: ["transport", "logistics", "freight", "road", "border", "permit", "motl", "commercial"]
+      },
+      "banking": {
+        answer: `<strong>Banking Services (CBE)</strong><br><br>Open an account at Commercial Bank of Ethiopia:<br>• National ID (Fayda) or Passport<br>• Passport-sized photos<br>• Active mobile number<br>• Initial deposit<br><br><strong>Time:</strong> 25 minutes<br><strong>Fee:</strong> Free<br><strong>Website:</strong> combanketh.et<br><br>Telebirr mobile banking also available through Ethio Telecom.`,
+        keywords: ["bank", "banking", "account", "cbe", "commercial bank", "telebirr", "mobile banking", "deposit"]
+      },
+      "education": {
+        answer: `<strong>Education Services (ETA)</strong><br><br>• Authentication of educational credentials<br>• Equivalence of foreign qualifications<br><br><strong>Website:</strong> neta.gov.et<br><br>This is required for many government positions and professional certifications.`,
+        keywords: ["education", "credential", "certificate", "degree", "authentication", "equivalence", "eta", "qualification"]
+      },
+      "mesob center": {
+        answer: `<strong>What is MESOB Center?</strong><br><br>MESOB (መሶብ) is a comprehensive services guide that consolidates Ethiopian government services into one reference. It covers:<br><br>• Trade & Business Registration<br>• Immigration & Identity (Fayda ID, Passports)<br>• Customs & Trade<br>• Agriculture & Environment<br>• Food & Drug Authority<br>• Transport & Logistics<br>• Banking & Finance<br>• Education Services<br><br>The name "Mesob" comes from the traditional Ethiopian gathering basket — symbolizing community, sharing, and unity.`,
+        keywords: ["mesob", "center", "about", "what is", "guide", "platform", "government", "services"]
+      },
+      "internship": {
+        answer: `<strong>BG Mesob Internship Platform</strong><br><br>Our platform manages internships:<br><br>• <strong>Apply:</strong> Submit application with documents<br>• <strong>Get Assigned:</strong> Matched with supervisor & department<br>• <strong>Check In Daily:</strong> Track attendance (Present before 8:15, Late 8:15-8:30)<br><br>Features include real-time attendance, application management, supervisor oversight, placement tracking, and analytics reports.<br><br>Sign in at <a href="/login.html">/login.html</a>`,
+        keywords: ["internship", "intern", "attendance", "check in", "check-in", "apply", "platform", "bg mesob"]
+      }
+    };
+
+    const FALLBACK = `I'm not sure about that specific topic. MESOB Center covers:<br><br>• <strong>Business Registration</strong> (MOTRI)<br>• <strong>Fayda National ID</strong> (id.gov.et)<br>• <strong>Passports & Immigration</strong> (ics.gov.et)<br>• <strong>Customs Exemptions</strong><br>• <strong>Agriculture</strong> (eaa.gov.et)<br>• <strong>Food & Drug</strong> (efda.gov.et)<br>• <strong>Transport</strong> (motl.gov.et)<br><br>Try asking about one of these topics!`;
+
+    function findAnswer(q) {
+      const lower = q.toLowerCase();
+      let best = null, bestScore = 0;
+      for (const [key, val] of Object.entries(KB)) {
+        let score = 0;
+        for (const kw of val.keywords) {
+          if (lower.includes(kw)) score += kw.length;
+        }
+        if (lower.includes(key)) score += 10;
+        if (score > bestScore) { bestScore = score; best = val; }
+      }
+      return bestScore > 0 ? best.answer : FALLBACK;
+    }
+
+    const chatToggle = document.getElementById('chatToggle');
+    const chatWindow = document.getElementById('chatWindow');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+    const chatTyping = document.getElementById('chatTyping');
+    const chatSuggestions = document.getElementById('chatSuggestions');
+
+    chatToggle.addEventListener('click', () => {
+      chatToggle.classList.toggle('active');
+      chatWindow.classList.toggle('open');
+      if (chatWindow.classList.contains('open')) chatInput.focus();
     });
 
-    document.querySelectorAll('.step').forEach((step, i) => {
-      step.style.transitionDelay = `${i * 0.12}s`;
+    function addMessage(text, isUser) {
+      const div = document.createElement('div');
+      div.className = `chat-msg ${isUser ? 'user' : 'bot'}`;
+      div.innerHTML = text;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function handleQuery(q) {
+      if (!q.trim()) return;
+      addMessage(q, true);
+      chatSuggestions.style.display = 'none';
+      chatTyping.classList.add('show');
+      setTimeout(() => {
+        chatTyping.classList.remove('show');
+        addMessage(findAnswer(q), false);
+      }, 600 + Math.random() * 400);
+    }
+
+    chatSend.addEventListener('click', () => { handleQuery(chatInput.value); chatInput.value = ''; });
+    chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { handleQuery(chatInput.value); chatInput.value = ''; } });
+    document.querySelectorAll('.chat-suggestion').forEach(btn => {
+      btn.addEventListener('click', () => handleQuery(btn.dataset.q));
     });
   </script>
 </body>

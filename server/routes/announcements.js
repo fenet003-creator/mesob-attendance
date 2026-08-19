@@ -5,6 +5,28 @@ const { validateRequired, validateIntId } = require('../utils/validate');
 
 const router = express.Router();
 
+// Public route for interns/supervisors to see active announcements
+router.get('/active', authenticate, async (req, res) => {
+  try {
+    const role = req.user.role;
+    let query = 'SELECT * FROM announcements WHERE is_active = 1';
+    const params = [];
+
+    if (role === 'intern') {
+      query += " AND (target_audience = 'all' OR target_audience = 'interns')";
+    } else if (role === 'supervisor') {
+      query += " AND (target_audience = 'all' OR target_audience = 'supervisors')";
+    }
+
+    query += ' ORDER BY created_at DESC';
+    const [rows] = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('Active announcements error:', err);
+    res.status(500).json({ error: 'Failed to fetch announcements' });
+  }
+});
+
 router.get('/', authenticate, requireRole('admin'), async (req, res) => {
   try {
     const { search, target_audience, is_active } = req.query;

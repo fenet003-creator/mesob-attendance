@@ -238,7 +238,124 @@ function initSchema() {
     console.log('Default admin created: admin / admin123');
   }
 
+  seedSampleData(database, bcrypt);
+
   console.log('SQLite database initialized at:', DB_PATH);
+}
+
+function seedSampleData(database, bcrypt) {
+  const hasInterns = database.prepare('SELECT COUNT(*) as cnt FROM interns').get();
+  if (hasInterns.cnt > 0) return;
+
+  console.log('Seeding sample data...');
+
+  const adminUser = database.prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1").get();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const departments = [
+    { name: 'Software Engineering', description: 'Web and mobile application development', head: 'Dr. Abebe Kebede' },
+    { name: 'Data Science', description: 'Data analytics, machine learning, and AI research', head: 'Dr. Sara Tadesse' },
+    { name: 'Quality Assurance', description: 'Software testing and quality control', head: 'Eng. Daniel Mamo' },
+    { name: 'DevOps', description: 'Infrastructure, CI/CD, and cloud operations', head: 'Eng. Fatima Ahmed' },
+  ];
+  const insertDept = database.prepare('INSERT INTO departments (name, description, head) VALUES (?, ?, ?)');
+  for (const d of departments) insertDept.run(d.name, d.description, d.head);
+
+  const supervisors = [
+    { full_name: 'Dr. Abebe Kebede', email: 'abebe@mesob.et', phone: '+251911111111', department: 'Software Engineering', specialization: 'Full-Stack Development', username: 'abebe_k' },
+    { full_name: 'Dr. Sara Tadesse', email: 'sara@mesob.et', phone: '+251922222222', department: 'Data Science', specialization: 'Machine Learning', username: 'sara_t' },
+  ];
+  const hashedSup = bcrypt.hashSync('supervisor123', 10);
+  const insertUser = database.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)');
+  const insertSupervisor = database.prepare('INSERT INTO supervisors (user_id, full_name, email, phone, department, specialization) VALUES (?, ?, ?, ?, ?, ?)');
+  for (const s of supervisors) {
+    const ur = insertUser.run(s.username, hashedSup, 'supervisor');
+    insertSupervisor.run(ur.lastInsertRowid, s.full_name, s.email, s.phone, s.department, s.specialization);
+  }
+
+  const internData = [
+    { full_name: 'Hana Tesfaye', email: 'hana@addis.ababa.edu', phone: '+251911001001', university: 'Addis Ababa University', department: 'Software Engineering', username: 'hana_t' },
+    { full_name: 'Biruk Alemayehu', email: 'biruk@st.uoguelph.edu', phone: '+251911002002', university: 'Bahir Dar University', department: 'Data Science', username: 'biruk_a' },
+    { full_name: 'Meskerem Girma', email: 'meskerem@aau.edu.et', phone: '+251911003003', university: 'Jimma University', department: 'Quality Assurance', username: 'meskerem_g' },
+    { full_name: 'Yonas Bekele', email: 'yonas@aicte.edu', phone: '+251911004004', university: 'Hawassa University', department: 'Software Engineering', username: 'yonas_b' },
+    { full_name: 'Ruth Damtew', email: 'ruth@aau.edu.et', phone: '+251911005005', university: 'Addis Ababa University', department: 'DevOps', username: 'ruth_d' },
+  ];
+  const hashedIntern = bcrypt.hashSync('intern123', 10);
+  const insertIntern = database.prepare(
+    'INSERT INTO interns (user_id, full_name, email, phone, university, department, start_date, end_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+  const internIds = [];
+  for (const i of internData) {
+    const ur = insertUser.run(i.username, hashedIntern, 'intern');
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 60);
+    const ir = insertIntern.run(ur.lastInsertRowid, i.full_name, i.email, i.phone, i.university, i.department, startDate.toISOString().slice(0, 10), endDate.toISOString().slice(0, 10), 'active');
+    internIds.push(ir.lastInsertRowid);
+  }
+
+  const insertAttend = database.prepare(
+    'INSERT OR IGNORE INTO attendance (intern_id, attendance_date, check_in, check_out, attendance_status) VALUES (?, ?, ?, ?, ?)'
+  );
+  const statuses = ['present', 'present', 'present', 'late', 'absent', 'present', 'late'];
+  for (let dayOffset = 6; dayOffset >= 0; dayOffset--) {
+    const date = new Date();
+    date.setDate(date.getDate() - dayOffset);
+    const dateStr = date.toISOString().slice(0, 10);
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    if (isWeekend) continue;
+
+    for (let j = 0; j < internIds.length; j++) {
+      const status = statuses[(dayOffset + j) % statuses.length];
+      let checkIn = null;
+      let checkOut = null;
+      if (status === 'present') {
+        checkIn = '08:05:00';
+        checkOut = '17:00:00';
+      } else if (status === 'late') {
+        checkIn = '08:20:00';
+        checkOut = '17:00:00';
+      }
+      insertAttend.run(internIds[j], dateStr, checkIn, checkOut, status);
+    }
+  }
+
+  const placements = [
+    { title: 'Frontend Developer Intern', department_id: 1, description: 'Build responsive web interfaces for our client portal', requirements: 'React, HTML/CSS, JavaScript', max_interns: 2, status: 'open' },
+    { title: 'Data Analyst Intern', department_id: 2, description: 'Analyze datasets and build dashboards for business insights', requirements: 'Python, SQL, statistics basics', max_interns: 1, status: 'open' },
+    { title: 'QA Tester Intern', department_id: 3, description: 'Test web applications and write test reports', requirements: 'Attention to detail, basic testing knowledge', max_interns: 1, status: 'open' },
+  ];
+  const insertPlacement = database.prepare(
+    'INSERT INTO placements (title, department_id, description, requirements, max_interns, start_date, end_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+  for (const p of placements) {
+    insertPlacement.run(p.title, p.department_id, p.description, p.requirements, p.max_interns, today, null, p.status);
+  }
+
+  const insertApp = database.prepare(
+    'INSERT INTO applications (applicant_name, email, phone, university, department, field_of_study, start_date, end_date, cover_letter, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+  insertApp.run('Dawit Lemma', 'dawit@aau.edu.et', '+251911006006', 'Addis Ababa University', 'Software Engineering', 'Computer Science', today, null, 'I am passionate about web development and want to contribute to meaningful projects.', 'pending');
+  insertApp.run('Tigist Haile', 'tigist@bdu.edu.et', '+251911007007', 'Bahir Dar University', 'Data Science', 'Statistics', today, null, 'I have strong analytical skills and experience with Python data libraries.', 'pending');
+  insertApp.run('Samuel Fisseha', 'samuel@hu.edu.et', '+251911008008', 'Hawassa University', 'Software Engineering', 'Software Engineering', today, null, 'Looking for an opportunity to apply my software skills in a professional environment.', 'approved');
+
+  database.prepare('INSERT INTO announcements (title, content, target_audience, priority, created_by) VALUES (?, ?, ?, ?, ?)').run(
+    'Welcome to BG Mesob Internship Program',
+    'We are excited to have you join our team! Please complete your onboarding by the end of this week. Check your email for details.',
+    'all', 'high', adminUser ? adminUser.id : null
+  );
+  database.prepare('INSERT INTO announcements (title, content, target_audience, priority, created_by) VALUES (?, ?, ?, ?, ?)').run(
+    'Weekly Standup Meeting',
+    'Every Monday at 9:00 AM we have a team standup. Attendance is mandatory for all interns.',
+    'interns', 'normal', adminUser ? adminUser.id : null
+  );
+
+  database.prepare('INSERT INTO audit_logs (user_id, username, action, entity_type, details) VALUES (?, ?, ?, ?, ?)').run(
+    adminUser ? adminUser.id : null, 'system', 'seed_data', 'system', 'Sample data seeded for demonstration'
+  );
+
+  console.log('Sample data seeded successfully');
 }
 
 // Mimics mysql2/promise pool.query() interface

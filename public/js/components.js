@@ -38,6 +38,7 @@ const Icons = {
 // --- SVG SIDEBAR ---
 function renderSidebar(role, activePage) {
   const isAdmin = role === 'admin';
+  const isSupervisor = role === 'supervisor';
   const navLinks = isAdmin
     ? {
         'main': [
@@ -60,13 +61,19 @@ function renderSidebar(role, activePage) {
           { href: '/admin/settings.html', page: 'settings', label: 'Settings', icon: Icons.settings },
         ],
       }
+    : isSupervisor
+    ? [
+        { href: '/supervisor/dashboard.html', page: 'dashboard', label: 'Dashboard', icon: Icons.dashboard },
+        { href: '/supervisor/interns.html', page: 'interns', label: 'My Interns', icon: Icons.users },
+        { href: '/supervisor/attendance.html', page: 'attendance', label: 'Attendance', icon: Icons.clock },
+      ]
     : [
         { href: '/intern/dashboard.html', page: 'dashboard', label: 'Dashboard', icon: Icons.dashboard },
         { href: '/intern/history.html', page: 'history', label: 'History', icon: Icons.history },
         { href: '/intern/profile.html', page: 'profile', label: 'Profile', icon: Icons.user },
       ];
 
-  const brand = isAdmin ? 'Admin Portal' : 'Intern Portal';
+  const brand = isAdmin ? 'Admin Portal' : isSupervisor ? 'Supervisor Portal' : 'Intern Portal';
 
   let navHtml = '';
   if (isAdmin) {

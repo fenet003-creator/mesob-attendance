@@ -6,6 +6,29 @@ const { validateRequired, validateIntId } = require('../utils/validate');
 
 const router = express.Router();
 
+// Supervisor self-service: get my assigned interns
+router.get('/interns', authenticate, requireRole('supervisor'), async (req, res) => {
+  try {
+    const [supRows] = await pool.query('SELECT id FROM supervisors WHERE user_id = ?', [req.user.id]);
+    if (supRows.length === 0) return res.json([]);
+
+    const supId = supRows[0].id;
+    const [interns] = await pool.query(`
+      SELECT i.id, i.full_name, i.email, i.phone, i.university, i.department, i.status,
+             ip.assigned_at as placement_date
+      FROM intern_supervisor ist
+      JOIN interns i ON ist.intern_id = i.id
+      LEFT JOIN intern_placement ip ON ip.intern_id = i.id
+      WHERE ist.supervisor_id = ?
+      ORDER BY i.full_name
+    `, [supId]);
+    res.json(interns);
+  } catch (err) {
+    console.error('Supervisor interns error:', err);
+    res.status(500).json({ error: 'Failed to fetch interns' });
+  }
+});
+
 router.get('/', authenticate, requireRole('admin'), async (req, res) => {
   try {
     const { search, status, department } = req.query;
