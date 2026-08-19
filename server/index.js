@@ -20,9 +20,14 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Initialize SQLite if no MySQL is configured
 async function start() {
-  if (!process.env.DB_HOST || process.env.USE_SQLITE === 'true') {
+  const pool = require('./config/db');
+
+  if (process.env.DATABASE_URL || process.env.POSTGRES_URL) {
+    console.log('Using PostgreSQL database');
+    const { initPgSchema } = require('./config/db-pg-init');
+    await initPgSchema(pool);
+  } else if (!process.env.DB_HOST || process.env.USE_SQLITE === 'true') {
     console.log('Using SQLite database (local dev mode)');
     const { initSchema } = require('./config/db-sqlite');
     initSchema();

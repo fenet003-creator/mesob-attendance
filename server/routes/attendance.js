@@ -248,4 +248,43 @@ router.get('/stats', authenticate, async (req, res) => {
   }
 });
 
+router.put('/:id', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    if (!validateIntId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid attendance record ID' });
+    }
+
+    const { check_in, check_out, attendance_status, attendance_date } = req.body;
+
+    const [existing] = await pool.query('SELECT * FROM attendance WHERE id = ?', [req.params.id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ error: 'Attendance record not found' });
+    }
+
+    if (attendance_status && !validateStatus(attendance_status)) {
+      return res.status(400).json({ error: 'Invalid status value' });
+    }
+    if (attendance_date && !validateDate(attendance_date)) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+
+    await pool.query(
+      `UPDATE attendance SET
+        check_in = COALESCE(?, check_in),
+        check_out = COALESCE(?, check_out),
+        attendance_status = COALESCE(?, attendance_status),
+        attendance_date = COALESCE(?, attendance_date),
+        updated_at = datetime('now')
+       WHERE id = ?`,
+      [check_in ?? null, check_out ?? null, attendance_status ?? null, attendance_date ?? null, req.params.id]
+    );
+
+    const [updated] = await pool.query('SELECT * FROM attendance WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Attendance record updated', record: updated[0] });
+  } catch (err) {
+    console.error('Update attendance error:', err);
+    res.status(500).json({ error: 'Failed to update attendance record' });
+  }
+});
+
 module.exports = router;

@@ -66,9 +66,9 @@ router.get('/:id/interns', authenticate, requireRole('admin'), async (req, res) 
     }
     const [rows] = await pool.query(
       `SELECT i.*, u.username FROM interns i
-       JOIN intern_supervisor isup ON i.id = isup.intern_id
+       JOIN intern_supervisor isu ON i.id = isu.intern_id
        LEFT JOIN users u ON i.user_id = u.id
-       WHERE isup.supervisor_id = ?
+       WHERE isu.supervisor_id = ?
        ORDER BY i.full_name ASC`,
       [req.params.id]
     );

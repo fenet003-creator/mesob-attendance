@@ -1,12 +1,21 @@
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+
+let initialized = false;
+
+async function init() {
+  if (initialized) return;
+  initialized = true;
+
+  const pool = require('../server/config/db');
+  if (process.env.DATABASE_URL || process.env.POSTGRES_URL) {
+    const { initPgSchema } = require('../server/config/db-pg-init');
+    await initPgSchema(pool);
+  }
+}
+
 const app = require('../server/app');
 
-app.use((_req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
-
-app.use((err, _req, res, _next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-module.exports = app;
+module.exports = async (req, res) => {
+  await init();
+  return app(req, res);
+};

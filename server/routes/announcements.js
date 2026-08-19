@@ -67,9 +67,11 @@ router.post('/', authenticate, requireRole('admin'), async (req, res) => {
     let userQuery = 'SELECT id FROM users WHERE 1=1';
     const notifParams = [];
     if (target_audience === 'interns') {
-      userQuery += " AND role = 'intern'";
+      userQuery += " AND role = ?";
+      notifParams.push('intern');
     } else if (target_audience === 'supervisors') {
-      userQuery += " AND role = 'supervisor'";
+      userQuery += " AND role = ?";
+      notifParams.push('supervisor');
     }
 
     const [users] = await pool.query(userQuery, notifParams);
