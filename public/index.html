@@ -174,13 +174,18 @@
     .footer-bottom .ethiopic { font-family: 'Noto Sans Ethiopic', sans-serif; color: rgba(212,160,23,0.4); }
 
     /* CHATBOT */
-    .chatbot-toggle { position: fixed; bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px; border-radius: 50%; background: var(--gold); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(184,134,11,0.4); z-index: 1000; transition: all 0.3s; }
-    .chatbot-toggle:hover { background: var(--gold-dark); transform: scale(1.05); }
-    .chatbot-toggle svg { width: 24px; height: 24px; }
+    .chatbot-toggle { position: fixed; bottom: 1.5rem; right: 1.5rem; width: 60px; height: 60px; border-radius: 50%; background: var(--gold); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(184,134,11,0.5); z-index: 1000; transition: all 0.3s; animation: chatPulse 2s ease-in-out infinite; }
+    @keyframes chatPulse { 0%, 100% { box-shadow: 0 4px 20px rgba(184,134,11,0.5); } 50% { box-shadow: 0 4px 30px rgba(184,134,11,0.8), 0 0 0 8px rgba(184,134,11,0.15); } }
+    .chatbot-toggle:hover { background: var(--gold-dark); transform: scale(1.08); animation: none; }
+    .chatbot-toggle svg { width: 26px; height: 26px; }
+    .chatbot-float { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 1000; display: flex; align-items: center; gap: 0.75rem; }
+    .chatbot-float .chatbot-toggle { position: static; }
+    .chatbot-label { background: var(--ink); color: #fff; padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.8rem; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 12px rgba(0,0,0,0.15); animation: labelFade 4s ease-in-out infinite; }
+    @keyframes labelFade { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
     .chatbot-toggle .chat-close { display: none; }
     .chatbot-toggle.active .chat-icon { display: none; }
     .chatbot-toggle.active .chat-close { display: block; }
-    .chatbot-window { position: fixed; bottom: 5rem; right: 1.5rem; width: 380px; height: 520px; background: var(--card); border-radius: var(--radius-2xl); box-shadow: 0 12px 48px rgba(26,26,46,0.15); border: 1px solid var(--border); z-index: 999; display: none; flex-direction: column; overflow: hidden; }
+    .chatbot-window { position: fixed; bottom: 6rem; right: 1.5rem; width: 380px; height: 520px; background: var(--card); border-radius: var(--radius-2xl); box-shadow: 0 12px 48px rgba(26,26,46,0.15); border: 1px solid var(--border); z-index: 999; display: none; flex-direction: column; overflow: hidden; }
     .chatbot-window.open { display: flex; }
     .chatbot-header { padding: 1rem 1.25rem; background: var(--coffee); color: #fff; display: flex; align-items: center; gap: 0.75rem; }
     .chatbot-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(184,134,11,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -228,7 +233,8 @@
       .steps { grid-template-columns: 1fr; gap: 2.5rem; }
       .footer { padding: 2rem 1.5rem; }
       .footer-links { flex-wrap: wrap; gap: 1rem; }
-      .chatbot-window { width: calc(100vw - 2rem); right: 1rem; bottom: 4.5rem; }
+      .chatbot-window { width: calc(100vw - 2rem); right: 1rem; bottom: 6.5rem; }
+      .chatbot-label { display: none; }
     }
 
     @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -272,7 +278,7 @@
         </div>
         <h2 class="animate-in delay-2">
           Building Ethiopia's<br>
-          Next <span class="ethiopic">ŝema.nextLine()</span><br>
+          <span class="ethiopic">አዲስ</span> Next<br>
           Generation
         </h2>
         <p class="animate-in delay-3">
@@ -513,10 +519,13 @@
   </footer>
 
   <!-- CHATBOT -->
-  <button class="chatbot-toggle" id="chatToggle" aria-label="Open support chat">
-    <svg class="chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    <svg class="chat-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-  </button>
+  <div class="chatbot-float" id="chatFloat">
+    <span class="chatbot-label">Need Help?</span>
+    <button class="chatbot-toggle" id="chatToggle" aria-label="Open support chat">
+      <svg class="chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <svg class="chat-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
   <div class="chatbot-window" id="chatWindow">
     <div class="chatbot-header">
       <div class="chatbot-avatar">
@@ -649,10 +658,12 @@
     const chatSend = document.getElementById('chatSend');
     const chatTyping = document.getElementById('chatTyping');
     const chatSuggestions = document.getElementById('chatSuggestions');
+    const chatLabel = document.querySelector('.chatbot-label');
 
     chatToggle.addEventListener('click', () => {
       chatToggle.classList.toggle('active');
       chatWindow.classList.toggle('open');
+      if (chatLabel) chatLabel.style.display = chatWindow.classList.contains('open') ? 'none' : '';
       if (chatWindow.classList.contains('open')) chatInput.focus();
     });
 
