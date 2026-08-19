@@ -45,7 +45,7 @@ async function apiRequest(endpoint, options = {}) {
 
   if (response.status === 401) {
     clearAuth();
-    window.location.href = '/login.html';
+    window.location.href = '/login';
     throw new Error('Session expired');
   }
 
@@ -63,7 +63,7 @@ async function apiRequest(endpoint, options = {}) {
 function requireAuth(requiredRole) {
   const user = getUser();
   if (!user || !getToken()) {
-    window.location.href = '/login.html';
+    window.location.href = '/login';
     return null;
   }
   if (requiredRole && user.role !== requiredRole) {

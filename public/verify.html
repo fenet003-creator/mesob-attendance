@@ -57,7 +57,7 @@
           iconDiv.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
           card.prepend(iconDiv);
           title.textContent = 'Email Verified!';
-          message.innerHTML = `${data.message}<br><br><a href="/login.html">Sign In →</a>`;
+          message.innerHTML = `${data.message}<br><br><a href="/login">Sign In →</a>`;
         })
         .catch(() => {
           spinner.style.display = 'none';
@@ -66,7 +66,7 @@
           iconDiv.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
           card.prepend(iconDiv);
           title.textContent = 'Verification Failed';
-          message.innerHTML = 'Something went wrong. Please try again or request a new verification link.<br><br><a href="/login.html">Back to Sign In</a>';
+          message.innerHTML = 'Something went wrong. Please try again or request a new verification link.<br><br><a href="/login">Back to Sign In</a>';
         });
     }
   </script>

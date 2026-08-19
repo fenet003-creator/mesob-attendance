@@ -319,7 +319,7 @@ function confirmLogout() {
   confirmDialog(
     'Sign Out',
     'Are you sure you want to sign out of your account?',
-    () => { clearAuth(); window.location.href = '/login.html'; },
+    () => { clearAuth(); window.location.href = '/login'; },
     'Sign Out',
     true
   );
