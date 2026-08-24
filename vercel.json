@@ -12,6 +12,8 @@
     { "src": "/login", "dest": "/public/login.html" },
     { "src": "/signup", "dest": "/public/signup.html" },
     { "src": "/verify", "dest": "/public/verify.html" },
+    { "src": "/forgot-password", "dest": "/public/forgot-password.html" },
+    { "src": "/reset-password", "dest": "/public/reset-password.html" },
     { "src": "/dashboard", "dest": "/public/intern/dashboard.html" },
     { "src": "/admin/(.*)", "dest": "/public/admin/$1" },
     { "src": "/intern/(.*)", "dest": "/public/intern/$1" },

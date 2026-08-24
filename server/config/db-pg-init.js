@@ -9,6 +9,8 @@ async function initPgSchema(pool) {
       role TEXT NOT NULL DEFAULT 'intern',
       verified INTEGER DEFAULT 0,
       verification_token TEXT,
+      password_reset_token TEXT,
+      password_reset_expires TEXT,
       created_at TEXT DEFAULT (NOW() AT TIME ZONE 'utc')
     );
 
@@ -155,10 +157,12 @@ async function initPgSchema(pool) {
     );
   `);
 
-  // Migration: add verification columns if missing
+  // Migration: add verification + reset columns if missing
   try {
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS verified INTEGER DEFAULT 0");
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT");
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token TEXT");
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires TEXT");
   } catch (e) { /* columns already exist */ }
 
   // Default settings

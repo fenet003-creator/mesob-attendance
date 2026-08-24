@@ -36,7 +36,7 @@ async function getTransporter() {
 
 async function sendVerificationEmail(email, token, baseUrl) {
   const transport = await getTransporter();
-  const verifyUrl = `${baseUrl}/verify.html?token=${token}`;
+  const verifyUrl = `${baseUrl}/verify?token=${token}`;
 
   const info = await transport.sendMail({
     from: process.env.SMTP_FROM || '"BG Mesob" <noreply@bgmesob.et>',
@@ -78,4 +78,49 @@ async function sendVerificationEmail(email, token, baseUrl) {
   return { messageId: info.messageId, previewUrl };
 }
 
-module.exports = { sendVerificationEmail, getTransporter };
+async function sendPasswordResetEmail(email, token, baseUrl) {
+  const transport = await getTransporter();
+  const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+  const info = await transport.sendMail({
+    from: process.env.SMTP_FROM || '"BG Mesob" <noreply@bgmesob.et>',
+    to: email,
+    subject: 'Reset Your Password — BG Mesob',
+    html: `
+      <div style="max-width:480px;margin:0 auto;font-family:system-ui,sans-serif;padding:2rem;">
+        <div style="text-align:center;margin-bottom:1.5rem;">
+          <h1 style="font-size:1.5rem;color:#1a1a2e;margin:0;"> BG Mesob</h1>
+          <p style="color:#7a7a8e;font-size:0.85rem;">Internship Management Platform</p>
+        </div>
+        <div style="background:#faf8f5;border-radius:12px;padding:2rem;border:1px solid #e8e4de;">
+          <h2 style="font-size:1.1rem;color:#1a1a2e;margin:0 0 1rem;">Reset Your Password</h2>
+          <p style="color:#3d3d56;font-size:0.9rem;line-height:1.6;">
+            We received a request to reset your password. Click the button below to choose a new password. This link expires in 1 hour.
+          </p>
+          <div style="text-align:center;margin:1.5rem 0;">
+            <a href="${resetUrl}" style="display:inline-block;padding:0.75rem 2rem;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.95rem;">
+              Reset Password
+            </a>
+          </div>
+          <p style="color:#7a7a8e;font-size:0.8rem;line-height:1.5;">
+            If the button doesn't work, copy and paste this link:<br>
+            <a href="${resetUrl}" style="color:#b8860b;word-break:break-all;">${resetUrl}</a>
+          </p>
+          <p style="color:#7a7a8e;font-size:0.8rem;margin-top:1rem;">If you didn't request this, you can safely ignore this email.</p>
+        </div>
+        <p style="text-align:center;color:#7a7a8e;font-size:0.75rem;margin-top:1.5rem;">
+          &copy; ${new Date().getFullYear()} BG Mesob. All rights reserved.
+        </p>
+      </div>
+    `,
+  });
+
+  const previewUrl = nodemailer.getTestMessageUrl(info);
+  if (previewUrl) {
+    console.log('📧 Password reset email preview:', previewUrl);
+  }
+
+  return { messageId: info.messageId, previewUrl };
+}
+
+module.exports = { sendVerificationEmail, sendPasswordResetEmail, getTransporter };

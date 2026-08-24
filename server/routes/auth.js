@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
 const { validatePassword } = require('../utils/validate');
-const { sendVerificationEmail } = require('../utils/email');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/email');
 
 const router = express.Router();
 
@@ -97,6 +97,146 @@ router.get('/verify', async (req, res) => {
   } catch (err) {
     console.error('Verify error:', err);
     res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email, username } = req.body;
+    const identifier = (email || username || '').trim();
+    if (!identifier) return res.status(400).json({ error: 'Email or username is required' });
+
+    let userRow = null;
+    let userEmail = null;
+
+    // Try username first
+    let [byUsername] = await pool.query('SELECT id, verified, verification_token FROM users WHERE username = ?', [identifier]);
+    if (byUsername.length > 0) {
+      userRow = byUsername[0];
+      // find email from intern/supervisor
+      let [ie] = await pool.query('SELECT email FROM interns WHERE user_id = ?', [userRow.id]);
+      if (ie.length > 0) userEmail = ie[0].email;
+      else {
+        let [se] = await pool.query('SELECT email FROM supervisors WHERE user_id = ?', [userRow.id]);
+        if (se.length > 0) userEmail = se[0].email;
+      }
+    }
+    // Try email in interns/supervisors
+    if (!userRow) {
+      let [ie] = await pool.query('SELECT user_id, email FROM interns WHERE email = ?', [identifier]);
+      if (ie.length > 0 && ie[0].user_id) {
+        let [ur] = await pool.query('SELECT id, verified, verification_token FROM users WHERE id = ?', [ie[0].user_id]);
+        if (ur.length > 0) { userRow = ur[0]; userEmail = ie[0].email; }
+      }
+    }
+    if (!userRow) {
+      let [se] = await pool.query('SELECT user_id, email FROM supervisors WHERE email = ?', [identifier]);
+      if (se.length > 0 && se[0].user_id) {
+        let [ur] = await pool.query('SELECT id, verified, verification_token FROM users WHERE id = ?', [se[0].user_id]);
+        if (ur.length > 0) { userRow = ur[0]; userEmail = se[0].email; }
+      }
+    }
+
+    if (!userRow) return res.status(404).json({ error: 'No account found with that email or username' });
+    if (userRow.verified === 1) return res.json({ message: 'Email already verified. You can sign in.' });
+    if (!userEmail) return res.status(400).json({ error: 'No email associated with this account' });
+
+    const newToken = crypto.randomBytes(32).toString('hex');
+    await pool.query('UPDATE users SET verification_token = ? WHERE id = ?', [newToken, userRow.id]);
+
+    const baseUrl = process.env.BASE_URL || req.protocol + '://' + req.get('host');
+    try {
+      await sendVerificationEmail(userEmail, newToken, baseUrl);
+    } catch (e) {
+      console.error('Resend verification email failed:', e.message);
+    }
+    res.json({ message: 'Verification email resent. Please check your inbox.' });
+  } catch (err) {
+    console.error('Resend verification error:', err);
+    res.status(500).json({ error: 'Failed to resend verification email' });
+  }
+});
+
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email, username } = req.body;
+    const identifier = (email || username || '').trim();
+    if (!identifier) return res.status(400).json({ error: 'Email or username is required' });
+
+    let userRow = null;
+    let userEmail = null;
+
+    let [byUsername] = await pool.query('SELECT id FROM users WHERE username = ?', [identifier]);
+    if (byUsername.length > 0) {
+      userRow = byUsername[0];
+      let [ie] = await pool.query('SELECT email FROM interns WHERE user_id = ?', [userRow.id]);
+      if (ie.length > 0) userEmail = ie[0].email;
+      else {
+        let [se] = await pool.query('SELECT email FROM supervisors WHERE user_id = ?', [userRow.id]);
+        if (se.length > 0) userEmail = se[0].email;
+        else {
+          // admin has no email; use identifier if it looks like email
+          if (identifier.includes('@')) userEmail = identifier;
+        }
+      }
+    }
+    if (!userRow) {
+      let [ie] = await pool.query('SELECT user_id, email FROM interns WHERE email = ?', [identifier]);
+      if (ie.length > 0 && ie[0].user_id) {
+        let [ur] = await pool.query('SELECT id FROM users WHERE id = ?', [ie[0].user_id]);
+        if (ur.length > 0) { userRow = ur[0]; userEmail = ie[0].email; }
+      }
+    }
+    if (!userRow) {
+      let [se] = await pool.query('SELECT user_id, email FROM supervisors WHERE email = ?', [identifier]);
+      if (se.length > 0 && se[0].user_id) {
+        let [ur] = await pool.query('SELECT id FROM users WHERE id = ?', [se[0].user_id]);
+        if (ur.length > 0) { userRow = ur[0]; userEmail = se[0].email; }
+      }
+    }
+
+    // Always return success to avoid enumeration
+    if (!userRow || !userEmail) {
+      return res.json({ message: 'If an account exists, a password reset link has been sent.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    await pool.query('UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?', [token, expires, userRow.id]);
+
+    const baseUrl = process.env.BASE_URL || req.protocol + '://' + req.get('host');
+    try {
+      await sendPasswordResetEmail(userEmail, token, baseUrl);
+    } catch (e) {
+      console.error('Forgot password email failed:', e.message);
+    }
+    res.json({ message: 'If an account exists, a password reset link has been sent.' });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Failed to process request' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password are required' });
+    if (!validatePassword(newPassword)) return res.status(400).json({ error: 'Password must be 6-255 characters' });
+
+    const [users] = await pool.query('SELECT id, password_reset_expires FROM users WHERE password_reset_token = ?', [token]);
+    if (users.length === 0) return res.status(400).json({ error: 'Invalid or expired reset token' });
+
+    const user = users[0];
+    if (user.password_reset_expires && new Date(user.password_reset_expires) < new Date()) {
+      return res.status(400).json({ error: 'Reset token has expired. Please request a new one.' });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?', [hashed, user.id]);
+    res.json({ message: 'Password reset successfully. You can now sign in.' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 });
 

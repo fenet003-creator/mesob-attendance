@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Interns — BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>My Interns</h1>
+          <p class="page-subtitle">Interns assigned to you</p>
+        </div>
+        <div class="page-header-actions">
+          <input type="text" id="searchInput" placeholder="Search interns…" style="padding:0.5rem 0.875rem;border:1.5px solid var(--border);border-radius:0.5rem;font-size:0.85rem;width:220px;">
+        </div>
+      </div>
+
+      <div id="alert"></div>
+
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Intern</th>
+                  <th>Department</th>
+                  <th>University</th>
+                  <th>Status</th>
+                  <th>Contact</th>
+                </tr>
+              </thead>
+              <tbody id="internTableBody">
+                <tr><td colspan="5" style="text-align:center;padding:2rem;"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    const user = requireAuth('supervisor');
+    if (!user) throw new Error('Not authorized');
+    document.getElementById('sidebar').innerHTML = renderSidebar('supervisor', 'interns');
+
+    let allInterns = [];
+
+    async function loadInterns() {
+      try {
+        allInterns = await apiRequest('/supervisors/interns');
+        renderTable(allInterns);
+      } catch (err) {
+        showAlert(document.getElementById('alert'), err.message);
+        document.getElementById('internTableBody').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--ink-muted);">Failed to load interns</td></tr>`;
+      }
+    }
+
+    function renderTable(interns) {
+      const tbody = document.getElementById('internTableBody');
+      if (interns.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--ink-muted);">No interns assigned yet. Contact admin to get assignments.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = interns.map(i => `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--gold-bg);border:1px solid var(--gold-light);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--gold);font-size:0.85rem;">${escapeHtml((i.full_name||'?').charAt(0).toUpperCase())}</div>
+              <div><strong>${escapeHtml(i.full_name)}</strong><br><small style="color:var(--ink-muted);">${escapeHtml(i.email||'')}</small></div>
+            </div>
+          </td>
+          <td>${escapeHtml(i.department||'—')}</td>
+          <td>${escapeHtml(i.university||'—')}</td>
+          <td><span class="badge badge-${i.status==='active'?'active':i.status==='pending'?'pending':'inactive'}">${escapeHtml(i.status)}</span></td>
+          <td><small>${escapeHtml(i.phone||'—')}<br>${escapeHtml(i.email||'')}</small></td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = allInterns.filter(i => (i.full_name||'').toLowerCase().includes(q) || (i.email||'').toLowerCase().includes(q) || (i.department||'').toLowerCase().includes(q));
+      renderTable(filtered);
+    });
+
+    loadInterns();
+  </script>
+</body>
+</html>

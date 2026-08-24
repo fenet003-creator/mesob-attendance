@@ -31,9 +31,14 @@
         <div class="form-group">
           <label for="password">Password</label>
           <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password" maxlength="255">
+          <div style="text-align:right;margin-top:0.35rem;"><a href="/forgot-password" style="font-size:0.78rem;color:var(--ink-muted);font-weight:600;">Forgot password?</a></div>
         </div>
         <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Sign In</button>
       </form>
+      <div id="resendBox" style="display:none;text-align:center;margin-top:1rem;font-size:0.8rem;">
+        <a href="#" id="resendLink" style="color:var(--gold);font-weight:600;">Resend verification email</a>
+        <span id="resendMsg" style="display:none;margin-left:0.5rem;color:var(--green);"></span>
+      </div>
       <div class="login-footer">
         <p>Don't have an account? <a href="/signup">Apply for Internship</a></p>
         <p>&copy; 2026 BG Mesob. All rights reserved.</p>
@@ -53,6 +58,19 @@
     if (user && getToken()) {
       window.location.href = getDashboardPath(user.role);
     }
+
+    document.getElementById('resendLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const msg = document.getElementById('resendMsg');
+      if (!username) { msg.textContent = 'Enter your username first'; msg.style.display = 'inline'; return; }
+      msg.textContent = 'Sending…'; msg.style.display = 'inline';
+      try {
+        const data = await apiRequest('/auth/resend-verification', { method: 'POST', body: JSON.stringify(username.includes('@') ? { email: username } : { username }) });
+        msg.textContent = data.message;
+        msg.style.color = 'var(--green)';
+      } catch (err) { msg.textContent = err.message; msg.style.color = 'var(--red)'; }
+    });
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -74,6 +92,10 @@
         window.location.href = getDashboardPath(data.user.role);
       } catch (err) {
         showAlert(alertEl, err.message);
+        // Show resend link if verification error
+        if (err.message.toLowerCase().includes('verify your email')) {
+          document.getElementById('resendBox').style.display = 'block';
+        }
         btn.disabled = false;
         btn.textContent = 'Sign In';
       }

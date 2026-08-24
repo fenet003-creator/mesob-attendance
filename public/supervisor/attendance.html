@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance — BG Mesob</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Attendance</h1>
+          <p class="page-subtitle">Daily attendance of your assigned interns</p>
+        </div>
+        <div class="page-header-actions" style="display:flex;gap:0.75rem;align-items:center;">
+          <input type="date" id="datePicker" style="padding:0.5rem 0.875rem;border:1.5px solid var(--border);border-radius:0.5rem;font-size:0.85rem;">
+          <span id="dateLabel" style="font-size:0.85rem;color:var(--ink-muted);"></span>
+        </div>
+      </div>
+
+      <div class="stats-grid" style="margin-bottom:1.5rem;">
+        <div class="stat-card"><div class="stat-card-accent success"></div><div class="stat-card-label">Present</div><div class="stat-card-value text-success" id="statPresent">—</div></div>
+        <div class="stat-card"><div class="stat-card-accent warning"></div><div class="stat-card-label">Late</div><div class="stat-card-value text-warning" id="statLate">—</div></div>
+        <div class="stat-card"><div class="stat-card-accent danger"></div><div class="stat-card-label">Absent</div><div class="stat-card-value text-danger" id="statAbsent">—</div></div>
+        <div class="stat-card"><div class="stat-card-accent gold"></div><div class="stat-card-label">Total Assigned</div><div class="stat-card-value" id="statTotal">—</div></div>
+      </div>
+
+      <div id="alert"></div>
+
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Intern</th>
+                  <th>Status</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                </tr>
+              </thead>
+              <tbody id="attTableBody">
+                <tr><td colspan="4" style="text-align:center;padding:2rem;"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
+  <script>
+    const user = requireAuth('supervisor');
+    if (!user) throw new Error('Not authorized');
+    document.getElementById('sidebar').innerHTML = renderSidebar('supervisor', 'attendance');
+
+    const datePicker = document.getElementById('datePicker');
+    const dateLabel = document.getElementById('dateLabel');
+    const today = new Date().toISOString().slice(0,10);
+    datePicker.value = today;
+    datePicker.max = today;
+
+    let internMap = new Map();
+    let internIds = new Set();
+
+    async function init() {
+      try {
+        const interns = await apiRequest('/supervisors/interns');
+        interns.forEach(i => { internMap.set(i.id, i); internIds.add(String(i.id)); });
+        document.getElementById('statTotal').textContent = interns.length;
+        if (interns.length === 0) {
+          document.getElementById('attTableBody').innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--ink-muted);">No interns assigned</td></tr>`;
+          return;
+        }
+        await loadAttendance(datePicker.value);
+      } catch (err) {
+        showAlert(document.getElementById('alert'), err.message);
+      }
+    }
+
+    async function loadAttendance(date) {
+      dateLabel.textContent = new Date(date).toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+      const tbody = document.getElementById('attTableBody');
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;"><div class="spinner"></div></td></tr>`;
+      try {
+        const records = await apiRequest(`/attendance/date/${date}`);
+        // Filter to only assigned interns
+        const filtered = records.filter(r => internIds.has(String(r.intern_id)));
+        // Build map of attendance by intern_id
+        const attByIntern = new Map(filtered.map(r => [String(r.intern_id), r]));
+
+        let present=0, late=0, absent=0;
+        const rows = [];
+        for (const [id, intern] of internMap) {
+          const rec = attByIntern.get(String(id));
+          let status = rec ? rec.attendance_status : 'absent';
+          if (status==='present') present++; else if (status==='late') late++; else absent++;
+          const badgeClass = status==='present'?'active':status==='late'?'pending':'inactive';
+          rows.push(`
+            <tr>
+              <td><strong>${escapeHtml(intern.full_name)}</strong><br><small style="color:var(--ink-muted);">${escapeHtml(intern.department||'')}</small></td>
+              <td><span class="badge badge-${badgeClass}">${escapeHtml(status)}</span></td>
+              <td>${rec && rec.check_in ? escapeHtml(rec.check_in) : '—'}</td>
+              <td>${rec && rec.check_out ? escapeHtml(rec.check_out) : '—'}</td>
+            </tr>
+          `);
+        }
+        document.getElementById('statPresent').textContent = present;
+        document.getElementById('statLate').textContent = late;
+        document.getElementById('statAbsent').textContent = absent;
+        tbody.innerHTML = rows.join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--red);">${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    datePicker.addEventListener('change', () => loadAttendance(datePicker.value));
+    init();
+  </script>
+</body>
+</html>
