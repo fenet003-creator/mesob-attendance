@@ -263,32 +263,34 @@
         return;
       }
 
-      tbody.innerHTML = apps.map(a => `
+      tbody.innerHTML = apps.map(a => {
+        const displayName = a.applicant_name || a.full_name || '';
+        return `
         <tr>
-          <td class="font-bold">${escapeHtml(a.full_name)}</td>
+          <td class="font-bold">${escapeHtml(displayName)}</td>
           <td>${escapeHtml(a.email)}</td>
           <td>${escapeHtml(a.university) || '\u2014'}</td>
           <td>${escapeHtml(a.department) || '\u2014'}</td>
-          <td class="font-mono text-sm">${formatDate(a.created_at || a.applied_date)}</td>
+          <td class="font-mono text-sm">${formatDate(a.created_at)}</td>
           <td>${applicationBadge(a.status)}</td>
           <td>
             <div class="btn-group">
               <button class="btn btn-sm btn-ghost" data-view="${a.id}" aria-label="View">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
-              ${a.status !== 'approved' ? `<button class="btn btn-sm btn-ghost" data-approve="${a.id}" data-name="${escapeHtml(a.full_name)}" aria-label="Approve" style="color:var(--color-success);">
+              ${a.status !== 'approved' ? `<button class="btn btn-sm btn-ghost" data-approve="${a.id}" data-name="${escapeHtml(displayName)}" aria-label="Approve" style="color:var(--color-success);">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
               </button>` : ''}
-              ${a.status !== 'rejected' ? `<button class="btn btn-sm btn-ghost" data-reject="${a.id}" data-name="${escapeHtml(a.full_name)}" aria-label="Reject" style="color:var(--color-danger);">
+              ${a.status !== 'rejected' ? `<button class="btn btn-sm btn-ghost" data-reject="${a.id}" data-name="${escapeHtml(displayName)}" aria-label="Reject" style="color:var(--color-danger);">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>` : ''}
-              ${a.status !== 'correction_requested' ? `<button class="btn btn-sm btn-ghost" data-correct="${a.id}" data-name="${escapeHtml(a.full_name)}" aria-label="Request Correction" style="color:var(--color-info);">
+              ${a.status !== 'correction_requested' ? `<button class="btn btn-sm btn-ghost" data-correct="${a.id}" data-name="${escapeHtml(displayName)}" aria-label="Request Correction" style="color:var(--color-info);">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>` : ''}
             </div>
           </td>
         </tr>
-      `).join('');
+      `;}).join('');
     }
 
     function applicationBadge(status) {
@@ -320,10 +322,11 @@
       try {
         const app = await apiRequest('/applications/' + id);
         const body = document.getElementById('viewModalBody');
+        const displayName = app.applicant_name || app.full_name || '';
         body.innerHTML = `
           <div class="mb-6">
             <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">Applicant</div>
-            <div class="font-bold text-lg">${escapeHtml(app.full_name)}</div>
+            <div class="font-bold text-lg">${escapeHtml(displayName)}</div>
             <div class="text-sm text-muted">${escapeHtml(app.email)}</div>
             ${app.phone ? `<div class="text-sm text-muted">${escapeHtml(app.phone)}</div>` : ''}
           </div>
@@ -353,10 +356,10 @@
               <div class="text-sm" style="background:var(--color-surface);padding:var(--space-4);border-radius:var(--radius-lg);white-space:pre-wrap;line-height:1.7;">${escapeHtml(app.cover_letter)}</div>
             </div>
           ` : ''}
-          ${app.cv_url ? `
+          ${(app.cv_url || app.documents) ? `
             <div class="mb-6">
               <div class="text-xs font-bold text-muted mb-2" style="text-transform:uppercase;letter-spacing:0.06em;">CV / Resume</div>
-              <div class="text-sm"><a href="${escapeHtml(app.cv_url)}" target="_blank" style="color:var(--color-gold);text-decoration:underline;">View CV</a></div>
+              <div class="text-sm"><a href="${escapeHtml(app.cv_url || app.documents)}" target="_blank" style="color:var(--color-gold);text-decoration:underline;">View CV</a></div>
             </div>
           ` : ''}
           ${app.rejection_reason ? `
@@ -453,14 +456,12 @@
       e.preventDefault();
       const alertEl = document.getElementById('addFormAlert');
       const payload = {
-        full_name: document.getElementById('add_full_name').value,
+        applicant_name: document.getElementById('add_full_name').value,
         email: document.getElementById('add_email').value,
         phone: document.getElementById('add_phone').value,
         university: document.getElementById('add_university').value,
         department: document.getElementById('add_department').value,
-        status: document.getElementById('add_status').value,
         cover_letter: document.getElementById('add_cover_letter').value,
-        cv_url: document.getElementById('add_cv_url').value,
       };
       try {
         await apiRequest('/applications', { method: 'POST', body: JSON.stringify(payload) });
