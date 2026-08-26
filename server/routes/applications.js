@@ -108,7 +108,7 @@ router.put('/:id', authenticate, requireRole('admin'), async (req, res) => {
   }
 });
 
-router.post('/:id/approve', authenticate, requireRole('admin'), async (req, res) => {
+router.post('/:id/approve', authenticate, requireRole('admin', 'supervisor'), async (req, res) => {
   try {
     if (!validateIntId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid application ID' });
@@ -130,24 +130,52 @@ router.post('/:id/approve', authenticate, requireRole('admin'), async (req, res)
     const app = rows[0];
     const bcrypt = require('bcryptjs');
     const defaultPassword = await bcrypt.hash('intern123', 10);
-    const username = app.email.split('@')[0];
+    const baseUsername = app.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+    let username = baseUsername;
+    let userId = null;
 
     try {
+      // Ensure unique username
+      let suffix = 0;
+      while (true) {
+        const [existing] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+        if (existing.length === 0) break;
+        suffix++;
+        username = `${baseUsername}${suffix}`;
+        if (suffix > 10) throw new Error('Username generation failed');
+      }
+
       const [userResult] = await pool.query(
-        'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
+        'INSERT INTO users (username, password, role, verified) VALUES (?, ?, ?, 1)',
         [username, defaultPassword, 'intern']
       );
+      userId = userResult.insertId;
       await pool.query(
         `INSERT INTO interns (user_id, full_name, email, phone, university, department, start_date, end_date, status)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
-        [userResult.insertId, app.applicant_name, app.email, app.phone, app.university, app.department, app.start_date, app.end_date]
+        [userId, app.applicant_name, app.email, app.phone, app.university, app.department, app.start_date, app.end_date]
       );
+
+      // Also mark the self-registered pending intern (from /auth/register) as active if exists
+      try {
+        await pool.query("UPDATE interns SET status='active', updated_at=datetime('now') WHERE email=? AND status='pending'", [app.email]);
+        await pool.query("UPDATE users SET verified=1 WHERE id IN (SELECT user_id FROM interns WHERE email=?)", [app.email]);
+      } catch (_) {}
+
+      // Send approval email
+      try {
+        const { sendApprovalEmail } = require('../utils/email');
+        const baseUrl = process.env.BASE_URL || 'https://bg-mesob-attendance.vercel.app';
+        await sendApprovalEmail(app.email, app.applicant_name, username, baseUrl);
+        console.log(`📧 Approval email sent to ${app.email} via ${req.user.role} ${req.user.username}`);
+      } catch (emailErr) {
+        console.error('Approval email failed:', emailErr.message);
+      }
     } catch (e) {
-      // User creation may fail if username/email exists — that's ok, admin can manually create
       console.warn('Auto-create intern from application failed:', e.message);
     }
 
-    res.json({ message: 'Application approved' });
+    res.json({ message: 'Application approved' + (userId ? ` — account ${username} created` : '') });
   } catch (err) {
     console.error('Approve application error:', err);
     res.status(500).json({ error: 'Failed to approve application' });

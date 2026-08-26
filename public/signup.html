@@ -176,6 +176,24 @@
     .form-note svg { width: 16px; height: 16px; min-width: 16px; color: var(--gold); margin-top: 1px; }
     .form-note p { font-size: 0.75rem; color: var(--ink-soft); line-height: 1.5; }
 
+    .pwd-strength { margin-top: 0.45rem; display: none; }
+    .pwd-strength.show { display: block; }
+    .pwd-strength-bar { height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; display: flex; gap: 3px; }
+    .pwd-strength-bar span { flex: 1; border-radius: 2px; background: var(--border); transition: background 0.3s; }
+    .pwd-strength-bar.weak span:nth-child(1) { background: var(--red); }
+    .pwd-strength-bar.fair span:nth-child(1), .pwd-strength-bar.fair span:nth-child(2) { background: #e67e22; }
+    .pwd-strength-bar.good span:nth-child(1), .pwd-strength-bar.good span:nth-child(2), .pwd-strength-bar.good span:nth-child(3) { background: #2d9cdb; }
+    .pwd-strength-bar.strong span { background: var(--green); }
+    .pwd-strength-text { font-size: 0.7rem; font-weight: 600; margin-top: 0.3rem; }
+    .pwd-strength-text.weak { color: var(--red); }
+    .pwd-strength-text.fair { color: #e67e22; }
+    .pwd-strength-text.good { color: #2d9cdb; }
+    .pwd-strength-text.strong { color: var(--green); }
+    .pwd-match { font-size: 0.7rem; font-weight: 600; margin-top: 0.3rem; display: none; }
+    .pwd-match.show { display: block; }
+    .pwd-match.ok { color: var(--green); }
+    .pwd-match.err { color: var(--red); }
+
     /* ─── Responsive ─── */
     @media (max-width: 900px) {
       .signup-layout { grid-template-columns: 1fr; }
@@ -271,8 +289,18 @@
             </div>
             <div class="form-group">
               <label for="password">Password <span class="required">*</span></label>
-              <input type="password" id="password" name="password" required placeholder="Min 6 characters" minlength="6" maxlength="255">
+              <input type="password" id="password" name="password" required placeholder="Min 8 chars, mix of letters & numbers" minlength="6" maxlength="255" autocomplete="new-password">
+              <div class="pwd-strength" id="pwdStrength">
+                <div class="pwd-strength-bar" id="pwdBar"><span></span><span></span><span></span><span></span></div>
+                <div class="pwd-strength-text" id="pwdText"></div>
+              </div>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirm_password">Confirm Password <span class="required">*</span></label>
+            <input type="password" id="confirm_password" name="confirm_password" required placeholder="Re-enter your password" minlength="6" maxlength="255" autocomplete="new-password">
+            <div class="pwd-match" id="pwdMatch"></div>
           </div>
 
           <div class="form-divider">Optional Details</div>
@@ -316,10 +344,71 @@
 
   <script src="/js/api.js"></script>
   <script>
+    // Password strength
+    const pwdInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirm_password');
+    const pwdBar = document.getElementById('pwdBar');
+    const pwdText = document.getElementById('pwdText');
+    const pwdStrength = document.getElementById('pwdStrength');
+    const pwdMatch = document.getElementById('pwdMatch');
+
+    function checkStrength(pwd) {
+      if (!pwd) return { level: '', label: '' };
+      let score = 0;
+      if (pwd.length >= 8) score++;
+      if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++;
+      if (/\d/.test(pwd)) score++;
+      if (/[^A-Za-z0-9]/.test(pwd)) score++;
+      if (pwd.length < 6) return { level: 'weak', label: 'Too short (min 6)' };
+      if (score <= 1) return { level: 'weak', label: 'Weak' };
+      if (score === 2) return { level: 'fair', label: 'Fair' };
+      if (score === 3) return { level: 'good', label: 'Good' };
+      return { level: 'strong', label: 'Strong' };
+    }
+
+    function updateStrength() {
+      const pwd = pwdInput.value;
+      if (!pwd) { pwdStrength.classList.remove('show'); return; }
+      const { level, label } = checkStrength(pwd);
+      pwdStrength.classList.add('show');
+      pwdBar.className = 'pwd-strength-bar ' + level;
+      pwdText.className = 'pwd-strength-text ' + level;
+      pwdText.textContent = label;
+    }
+
+    function updateMatch() {
+      const pwd = pwdInput.value;
+      const conf = confirmInput.value;
+      if (!conf) { pwdMatch.classList.remove('show'); return; }
+      pwdMatch.classList.add('show');
+      if (pwd === conf) { pwdMatch.className = 'pwd-match show ok'; pwdMatch.textContent = '✓ Passwords match'; }
+      else { pwdMatch.className = 'pwd-match show err'; pwdMatch.textContent = '✗ Passwords do not match'; }
+    }
+
+    pwdInput.addEventListener('input', () => { updateStrength(); updateMatch(); });
+    confirmInput.addEventListener('input', updateMatch);
+
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('signupBtn');
       const alertEl = document.getElementById('alert');
+
+      const pwd = pwdInput.value;
+      const conf = confirmInput.value;
+      const { level } = checkStrength(pwd);
+      if (pwd !== conf) {
+        alertEl.className = 'alert alert-error';
+        alertEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span>Passwords do not match</span>`;
+        alertEl.style.display = 'flex';
+        return;
+      }
+      if (level === 'weak') {
+        alertEl.className = 'alert alert-error';
+        alertEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span>Password too weak. Use at least 8 characters with mix of letters, numbers & symbols</span>`;
+        alertEl.style.display = 'flex';
+        return;
+      }
+
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner spinner-sm"></span> Submitting...';
       alertEl.className = 'alert';
@@ -329,7 +418,7 @@
         full_name: document.getElementById('full_name').value,
         email: document.getElementById('email').value,
         username: document.getElementById('username').value,
-        password: document.getElementById('password').value,
+        password: pwd,
         phone: document.getElementById('phone').value || undefined,
         university: document.getElementById('university').value || undefined,
         department: document.getElementById('department').value || undefined,

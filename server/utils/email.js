@@ -123,4 +123,50 @@ async function sendPasswordResetEmail(email, token, baseUrl) {
   return { messageId: info.messageId, previewUrl };
 }
 
-module.exports = { sendVerificationEmail, sendPasswordResetEmail, getTransporter };
+async function sendApprovalEmail(email, fullName, username, baseUrl) {
+  const transport = await getTransporter();
+  const loginUrl = `${baseUrl}/login`;
+
+  const info = await transport.sendMail({
+    from: process.env.SMTP_FROM || '"BG Mesob" <noreply@bgmesob.et>',
+    to: email,
+    subject: 'Your Internship Application is Approved — BG Mesob',
+    html: `
+      <div style="max-width:480px;margin:0 auto;font-family:system-ui,sans-serif;padding:2rem;">
+        <div style="text-align:center;margin-bottom:1.5rem;">
+          <h1 style="font-size:1.5rem;color:#1a1a2e;margin:0;"> BG Mesob</h1>
+          <p style="color:#7a7a8e;font-size:0.85rem;">Internship Management Platform</p>
+        </div>
+        <div style="background:#faf8f5;border-radius:12px;padding:2rem;border:1px solid #e8e4de;">
+          <h2 style="font-size:1.1rem;color:#1a1a2e;margin:0 0 1rem;">Congratulations, ${fullName}!</h2>
+          <p style="color:#3d3d56;font-size:0.9rem;line-height:1.6;">
+            Your internship application has been <strong style="color:#2d6a4f;">approved</strong> by our team. Your intern account is now active.
+          </p>
+          <div style="background:#fff;border:1px solid #e8e4de;border-radius:8px;padding:1rem;margin:1.2rem 0;">
+            <p style="margin:0 0 0.4rem;color:#1a1a2e;font-size:0.85rem;"><strong>Username:</strong> ${username}</p>
+            <p style="margin:0;color:#1a1a2e;font-size:0.85rem;"><strong>Temporary password:</strong> intern123</p>
+            <p style="margin:0.6rem 0 0;color:#7a7a8e;font-size:0.75rem;">Please sign in and change your password immediately.</p>
+          </div>
+          <div style="text-align:center;margin:1.5rem 0;">
+            <a href="${loginUrl}" style="display:inline-block;padding:0.75rem 2rem;background:#b8860b;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.95rem;">
+              Sign In Now
+            </a>
+          </div>
+          <p style="color:#7a7a8e;font-size:0.8rem;line-height:1.5;">
+            If the button doesn't work, copy this link:<br>
+            <a href="${loginUrl}" style="color:#b8860b;word-break:break-all;">${loginUrl}</a>
+          </p>
+        </div>
+        <p style="text-align:center;color:#7a7a8e;font-size:0.75rem;margin-top:1.5rem;">
+          &copy; ${new Date().getFullYear()} BG Mesob. All rights reserved.
+        </p>
+      </div>
+    `,
+  });
+
+  const previewUrl = nodemailer.getTestMessageUrl(info);
+  if (previewUrl) console.log('📧 Approval email preview:', previewUrl);
+  return { messageId: info.messageId, previewUrl };
+}
+
+module.exports = { sendVerificationEmail, sendPasswordResetEmail, sendApprovalEmail, getTransporter };
