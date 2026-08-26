@@ -91,9 +91,11 @@
         setAuth(data.token, data.user);
         window.location.href = getDashboardPath(data.user.role);
       } catch (err) {
-        showAlert(alertEl, err.message);
+        const msg = err.message || 'Something went wrong. Please try again.';
+        alertEl.style.display = 'block';
+        showAlert(alertEl, msg);
         // Show resend link if verification error
-        if (err.message.toLowerCase().includes('verify your email')) {
+        if (msg.toLowerCase().includes('verify your email')) {
           document.getElementById('resendBox').style.display = 'block';
         }
         btn.disabled = false;

@@ -431,8 +431,9 @@
         document.getElementById('signupForm').reset();
         setTimeout(() => { window.location.href = '/login'; }, 4000);
       } catch (err) {
+        const msg = err.message || 'Something went wrong. Please try again.';
         alertEl.className = 'alert alert-error';
-        alertEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span>${err.message}</span>`;
+        alertEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span>${msg}</span>`;
         alertEl.style.display = 'flex';
         btn.disabled = false;
         btn.innerHTML = 'Submit Application <span class="btn-arrow">&rarr;</span>';
